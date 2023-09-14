@@ -1,7 +1,5 @@
-import os
-
+from pathlib import Path
 import json
-import ffmpy
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -20,7 +18,7 @@ class PreProcessor():
 
     model_id = 'damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
     def __init__(self,*args):
-        self.processPath = args[0]
+        self.inputPath = args[0]
 
 
 
@@ -73,44 +71,63 @@ class PreProcessor():
     '''
         把视频按时间戳文件进行切割
     '''
-    def videosPreProcess(self):
-        videos = self.__getProcessFils('mp4')
-        for video in videos:
-            splitName=os.path.splitext(video)[0]
-            jsonFile = splitName+'.json'
-            with open(jsonFile,'r') as f:
-                dicts = json.load(f)
-            timestamps=dicts['timestamps']
-            os.makedirs(splitName,exist_ok=True)
-            i=0
-            videoC = VideoFileClip(video)
-            movieEnd = int(videoC.duration)
-            for timestamp in timestamps:
-                i=i+1
+    def videosPreProcess(self,**kwargs):
+        S_TIME=5
+        input_dir = kwargs.get('input_dir')
+        output_dir = kwargs.get('output_dir')
 
-                startTime = int(timestamp['start']/1000)
-                endTime = int(timestamp['end'] / 1000)
-                if endTime == startTime:
-                    endTime= endTime+1
-                outputName = '{0}/{1:06}.mp4'.format(splitName,i)
+        videos = self.__getProcessFils(input_dir,'mp4')
+        for video in videos:
+            outputD=self.__genOutputDir(input_dir,output_dir,video)
+            i=0
+            videoC = VideoFileClip(str(video))
+            movieEnd = int(videoC.duration)
+            while i < movieEnd:
+                startTime = i
+                endTime = i + S_TIME
+
+                outputName = '{0}/{1:05}_{2:05}.mp4'.format(outputD,
+                                                            startTime,
+                                                            endTime)
 
                 if endTime > movieEnd:
                     endTime = movieEnd
                 clipVideo = videoC.subclip(startTime,endTime)
                 clipVideo.write_videofile(outputName)
+                i=i+S_TIME
+
+    '''
+        处理文件后的输出目录生成并返回目录名称
+    '''
+    def __genOutputDir(self,input_dir,output_dir,file):
+        iparts = Path(input_dir).parts
+        suffix = Path(file).suffix
+        fparts = Path(file).parent.parts
+        outparts = []
+        for fp in fparts:
+            if fp not in iparts:
+                outparts.append(fp)
+        op = output_dir
+        if len(outparts) > 0:
+            for o in outparts:
+                op=op +'/{}'.format(o)
+                Path(op).mkdir(exist_ok=True)
+        lastPath = Path(file).name.split('.')[0]
+        op = op +'/{}'.format(lastPath)
+        Path(op).mkdir(exist_ok=True)
+        dir = str(op)
+        return dir
 
 
     '''
         获取所有处理文件，并返回文件列表，type是文件的扩展名，也是文件的类型，内部私有方法
     '''
-    def __getProcessFils(self, type):
+    def __getProcessFils(self,input_dir,type):
+        inputPath = input_dir
         fileType = type
-        path = self.processPath
         files = []
-        for f in os.listdir(path):
-            file = os.path.join(path, f)
-            if os.path.isfile(file) and file.endswith(fileType):
-                files.append(file)
+        for file in Path.glob(Path(inputPath),'*/*.{}'.format(fileType)):
+            files.append(file)
         return files
 
     '''
@@ -124,12 +141,3 @@ class PreProcessor():
         audio_clip = AudioFileClip(video)
         audio_clip.write_audiofile(audio_file)
 
-    def __ms_to_hours(self,millis):
-        seconds = (millis/1000) % 60
-        seconds = int (seconds)
-        minutes = (millis/(1000*60)) % 60
-        minutes = int (minutes)
-        hours = (millis/(1000*60*60)) % 24
-        hours = int (hours)
-
-        return ("%d:%d:%d" % (hours,minutes,seconds))

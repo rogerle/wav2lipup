@@ -14,4 +14,4 @@ class TestProcessor(unittest.TestCase):
 
     def testVideoPreProcess(self):
         processor = self.preProcessor
-        processor.videosPreProcess()
+        processor.videosPreProcess(input_dir='../data/test_data/',output_dir='../data/test_data/output')
