@@ -10,4 +10,8 @@ class TestProcessor(unittest.TestCase):
 
     def testAudioProcessByASR(self):
         processor =self.preProcessor
-        processor.audioProcessByASR(audioType='wav')
+        processor.audioProcessByASR(audioType='mp4')
+
+    def testVideoPreProcess(self):
+        processor = self.preProcessor
+        processor.videosPreProcess()
