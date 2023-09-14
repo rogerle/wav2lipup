@@ -17,22 +17,18 @@ from tqdm import tqdm
 class PreProcessor():
 
     model_id = 'damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
-    def __init__(self,*args):
-        self.inputPath = args[0]
-
-
 
     '''
         根据静音的时间长短来对音频或mp4视频文件进行切割
     '''
-    def audioProcessBySilent(self,**types):
-        audioType = types.get('audioType')
-        audioFiles = self.__getProcessFils(audioType)
+    def videosPreProcessBySilent(self,**types):
+        ext = types.get('ext')
+        audioFiles = self.__getProcessFils(ext)
         '''
             对音频按静音分割记录时间戳
         '''
         for file in tqdm(audioFiles):
-            aud = AudioSegment.from_file(file,format=audioType)
+            aud = AudioSegment.from_file(file,format=ext)
             loudness = aud.dBFS
             segments = detect_nonsilent(aud,
                                       min_silence_len=500,
@@ -41,42 +37,34 @@ class PreProcessor():
                                       )
             print(segments)
     '''
-        利用ASR对音频文件进行时间戳分离，并写入相同文件名的json文件
+        利用ASR对音频文件进行时间戳分离，并写入相同文件名的json文件,然后根据时间戳对视频进行分割处理
     '''
-    def audioProcessByASR(self,**types):
-        audioType = types.get('audioType')
-        audioFiles = self.__getProcessFils(audioType)
-        if audioType == 'mp4':
-            for file in tqdm(audioFiles):
-                self.__splitAudioFromVideo(file)
-        audioFiles = self.__getProcessFils('wav')
-
-        asr_func = pipeline(task=Tasks.auto_speech_recognition, model=self.model_id)
+    def videosPreProcessByASR(self,**kwargs):
+        inputdir = kwargs.get('input_dir')
+        outputdir = kwargs.get('output_dir')
+        ext = kwargs.get('ext')
 
 
-        for file in tqdm(audioFiles):
-            rec_result = asr_func(audio_in=file)
-            sentences = rec_result.get('sentences')
-            timest=[]
-            for items in sentences:
-                timest.append({'start':items['start'],'end':items['end']})
-            #对时间戳进行记录到文件，下次再处理可以不用再用语音处理
-            absfile = os.path.abspath(file)
-            filename = absfile.split('.')[0]
-            newfile = filename+'.json'
-            video_times={'timestamps':timest}
-            with open(newfile,'w') as wf:
-                wf.write(json.dumps(video_times))
+        videoFiles = self.__getProcessFils(input_dir=inputdir,
+                                           type=ext)
+        asr_func = pipeline(task=Tasks.auto_speech_recognition,
+                            model=self.model_id)
+        for video in tqdm(videoFiles):
+            self.__genTimeStampByASR(video=video,
+                                     asr=asr_func)
+
+        #接下去要写根据时间戳来分割视频
 
     '''
         把视频按时间戳文件进行切割
     '''
-    def videosPreProcess(self,**kwargs):
-        S_TIME=5
+    def videosPreProcessByTime(self, **kwargs):
+        S_TIME= kwargs.get('s_time')
         input_dir = kwargs.get('input_dir')
         output_dir = kwargs.get('output_dir')
+        ext = kwargs.get('ext')
 
-        videos = self.__getProcessFils(input_dir,'mp4')
+        videos = self.__getProcessFils(input_dir,ext)
         for video in videos:
             outputD=self.__genOutputDir(input_dir,output_dir,video)
             i=0
@@ -101,12 +89,13 @@ class PreProcessor():
     '''
     def __genOutputDir(self,input_dir,output_dir,file):
         iparts = Path(input_dir).parts
-        suffix = Path(file).suffix
         fparts = Path(file).parent.parts
         outparts = []
+        #分割文件路径，获取上层需要创建的路径名成
         for fp in fparts:
             if fp not in iparts:
                 outparts.append(fp)
+        #构建输出路径，并创建不存在的输出目录
         op = output_dir
         if len(outparts) > 0:
             for o in outparts:
@@ -126,18 +115,34 @@ class PreProcessor():
         inputPath = input_dir
         fileType = type
         files = []
-        for file in Path.glob(Path(inputPath),'*/*.{}'.format(fileType)):
+        for file in Path.glob(Path(inputPath),'**/*.{}'.format(fileType)):
             files.append(file)
         return files
 
     '''
         把视频文件的音频剥离出来
     '''
-    def __splitAudioFromVideo(self,videoFile):
-        video = videoFile
-        audio_name = os.path.basename(video).split('.')[0]
-        path = self.processPath
-        audio_file = os.path.join(path,audio_name+'.wav')
-        audio_clip = AudioFileClip(video)
-        audio_clip.write_audiofile(audio_file)
+    def __genTimeStampByASR(self, **kwargs):
+        video = kwargs.get('video')
+        asr_func = kwargs.get('asr')
 
+        wname = Path(video).name.replace('.mp4','.wav')
+        temp_dir = os.environ.get('TEMP')
+        wavfile = temp_dir+'/'+wname
+        audio_clip = AudioFileClip(str(video))
+        audio_clip.write_audiofile(wavfile)
+
+        rec_result = asr_func(audio_in=wavfile)
+
+        # 获取语句时间戳
+        sentences = rec_result.get('sentences')
+        timest = []
+        for items in sentences:
+            timest.append({'start': items['start'], 'end': items['end']})
+        fname = Path(video).name.replace('.mp4', '.json')
+        path = Path(video).parent
+        tf = str(path) + '/' + fname
+        video_times = {'timestamps': timest}
+        with open(tf, 'w') as f:
+            f.write(json.dumps(video_times))
+        print(video_times)
