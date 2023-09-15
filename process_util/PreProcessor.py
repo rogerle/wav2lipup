@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 import json
 
@@ -19,41 +20,51 @@ class PreProcessor():
     model_id = 'damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
 
     '''
-        根据静音的时间长短来对音频或mp4视频文件进行切割
-    '''
-    def videosPreProcessBySilent(self,**types):
-        ext = types.get('ext')
-        audioFiles = self.__getProcessFils(ext)
-        '''
-            对音频按静音分割记录时间戳
-        '''
-        for file in tqdm(audioFiles):
-            aud = AudioSegment.from_file(file,format=ext)
-            loudness = aud.dBFS
-            segments = detect_nonsilent(aud,
-                                      min_silence_len=500,
-                                      silence_thresh=loudness - 50,
-                                      seek_step=1
-                                      )
-            print(segments)
-    '''
         利用ASR对音频文件进行时间戳分离，并写入相同文件名的json文件,然后根据时间戳对视频进行分割处理
     '''
     def videosPreProcessByASR(self,**kwargs):
-        inputdir = kwargs.get('input_dir')
-        outputdir = kwargs.get('output_dir')
+        input_dir = kwargs.get('input_dir')
+        output_dir = kwargs.get('output_dir')
         ext = kwargs.get('ext')
 
 
-        videoFiles = self.__getProcessFils(input_dir=inputdir,
+        videoFiles = self.__getProcessFils(input_dir=input_dir,
                                            type=ext)
         asr_func = pipeline(task=Tasks.auto_speech_recognition,
                             model=self.model_id)
         for video in tqdm(videoFiles):
-            self.__genTimeStampByASR(video=video,
-                                     asr=asr_func)
+            #看是否已经有时间戳，没有的话就做时间戳文件
+            parentPath = Path(video).parent
+            filename = Path(video).stem
+            jsonfile = Path.joinpath(parentPath,filename).with_suffix('.json')
+            if Path(jsonfile).exists() is not True:
+                self.__genTimeStampByASR(video=video,
+                                        asr=asr_func)
+            with open(jsonfile,'r') as f:
+                dicts = json.load(f)
+            timestamps = dicts['timestamps']
+            start = 0
+            videoC = VideoFileClip(str(video))
+            movieEnd = int(videoC.duration)
+            outputD = self.__genOutputDir(input_dir,
+                                          output_dir,
+                                          video)
+            for time in timestamps:
+                tmpEnd = time['end']
+                if (tmpEnd - start) < 5000:
+                    continue
+                else:
+                    startTime = round(start/1000)
+                    endTime = round(tmpEnd/1000)
+                    if endTime > movieEnd:
+                        endTime = movieEnd
+                    self.__genClipVideo(videoC,startTime,endTime,outputD)
+                    start = tmpEnd
+            if start > movieEnd:
+                st = round(start)
+                self.__genClipVideo(videoC,st,movieEnd,outputD)
 
-        #接下去要写根据时间戳来分割视频
+
 
     '''
         把视频按时间戳文件进行切割
@@ -70,19 +81,25 @@ class PreProcessor():
             i=0
             videoC = VideoFileClip(str(video))
             movieEnd = int(videoC.duration)
+
+            #按秒数来分割视频，最后一段到结束
             while i < movieEnd:
                 startTime = i
                 endTime = i + S_TIME
-
-                outputName = '{0}/{1:05}_{2:05}.mp4'.format(outputD,
-                                                            startTime,
-                                                            endTime)
-
                 if endTime > movieEnd:
                     endTime = movieEnd
-                clipVideo = videoC.subclip(startTime,endTime)
-                clipVideo.write_videofile(outputName)
+                self.__genClipVideo(videoC,startTime,endTime,outputD)
                 i=i+S_TIME
+
+    '''
+        切割视频文件写入到指定目录
+    '''
+    def __genClipVideo(self,videoClip,startTime,endTime,outputD):
+        outputName = '{0}/{1:05}_{2:05}.mp4'.format(outputD,
+                                                    startTime,
+                                                    endTime)
+        clipVideo = videoClip.subclip(startTime, endTime)
+        clipVideo.write_videofile(outputName)
 
     '''
         处理文件后的输出目录生成并返回目录名称
@@ -145,4 +162,4 @@ class PreProcessor():
         video_times = {'timestamps': timest}
         with open(tf, 'w') as f:
             f.write(json.dumps(video_times))
-        print(video_times)
+        return video_times
