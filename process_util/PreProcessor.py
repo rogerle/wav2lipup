@@ -60,7 +60,7 @@ class PreProcessor():
                         endTime = movieEnd
                     self.__genClipVideo(videoC,startTime,endTime,outputD)
                     start = tmpEnd
-            if start > movieEnd:
+            if start < movieEnd:
                 st = round(start)
                 self.__genClipVideo(videoC,st,movieEnd,outputD)
 
