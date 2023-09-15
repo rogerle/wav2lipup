@@ -2,7 +2,7 @@ import unittest
 
 from PIL import Image
 
-from process_util.faceDetector import FaceDetector
+from process_util.FaceDetector import FaceDetector
 
 
 class TestFaceDetector(unittest.TestCase):

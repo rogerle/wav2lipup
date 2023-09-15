@@ -1,3 +1,4 @@
+import json
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -32,6 +33,7 @@ class TestProcessor(unittest.TestCase):
         self.assertEqual(11, num2)
 
     def testVideoPreProcessByTime(self):
+        Path(self.__outputT_dir__).mkdir(exist_ok=True)
         processor = self.preProcessor
 
         processor.videosPreProcessByTime(input_dir=self.__input_dir__,
