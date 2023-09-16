@@ -19,6 +19,15 @@ class DataProcessTest(unittest.TestCase):
         facefiles= Counter(path1f)['.jpg']
         self.assertEqual(150,facefiles)
         self.assertTrue(wavfile.exists())
+        dp.processVideoFile('../data/test_data/output/000002/000001/00000_00005.mp4',
+                            device='gpu',
+                            processed_data_root='../data/test_data/pr_data')
+        face_path2 = Path('../data/test_data/pr_data/000002/000001/00000_00005')
+        wavfile2 = Path('../data/test_data/pr_data/000002/000001/00000_00005/audio.wav')
+        path2f = (i.suffix for i in face_path2.iterdir())
+        facefiles= Counter(path2f)['.jpg']
+        self.assertEqual(150,facefiles)
+        self.assertTrue(wavfile2.exists())
 
 
 

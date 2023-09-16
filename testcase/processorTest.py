@@ -1,4 +1,3 @@
-import json
 import unittest
 from collections import Counter
 from pathlib import Path
