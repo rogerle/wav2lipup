@@ -1,0 +1,7 @@
+train_config:
+  #audio train config
+  num_mels: 80
+  rescale: True
+
+  #image training parameters,this is the 96*96 face traning
+  img_size: 96

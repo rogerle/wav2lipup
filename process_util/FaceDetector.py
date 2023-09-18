@@ -1,0 +1,21 @@
+from modelscope.pipelines import pipeline
+from modelscope.utils.constant import Tasks
+
+
+class FaceDetector():
+    # 使用modelscope的mogofacedetector模型进行人脸检测
+    model_id = 'damo/cv_resnet101_face-detection_cvpr22papermogface'
+
+    # 初始化人脸热别模型，利用这个模型来识别人脸
+    def __init__(self):
+        # 初始化模型，人脸检测可以做
+        self.mog_face_detection_func = pipeline(Tasks.face_detection, self.model_id)
+
+    """
+       在图片上进行人脸识别，回传人脸识别的原始数据，包含人脸的位置以及五官位置信息
+       其中src_img_path是图片的物理路径
+    """
+
+    def faceDetec(self, *args):
+        raw_result = self.mog_face_detection_func(args[0])
+        return raw_result
