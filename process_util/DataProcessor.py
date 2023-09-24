@@ -63,8 +63,8 @@ class DataProcessor():
 
     def __get_split_path(self,vfile,processed_data_root):
         vf = Path(vfile)
-        fdir = vf.parts[-3]+'/'+vf.parts[-2]
-        fbase = vf.stem
+        fdir = vf.parts[-3]
+        fbase = vf.parts[-2]+'_'+vf.stem
         fulldir = processed_data_root+'/'+str(fdir)+'/'+fbase
         Path(fulldir).mkdir(parents=True,exist_ok=True)
 
