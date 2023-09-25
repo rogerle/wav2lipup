@@ -5,13 +5,13 @@ class BaseConv2D(nn.Module):
         super(BaseConv2D, self).__init__(*args, **kwargs)
         self.residual = residual
         self.act = nn.ReLU()
-        self.face_encode_block = nn.Sequential(
+        self.conv_block = nn.Sequential(
             nn.Conv2d(cin, cout, kernel_size=kernel_size, stride=stride, padding=padding),
             nn.BatchNorm2d(cout)
         )
 
     def forward(self,x):
-        out = self.face_encode_block(x)
+        out = self.conv_block(x)
         if self.residual:
             out += x
         return self.act(out)
