@@ -60,9 +60,9 @@ class PreProcessor():
                         endTime = movieEnd
                     self.__genClipVideo(videoC,startTime,endTime,outputD)
                     start = tmpEnd
-            if start > movieEnd:
-                st = round(start/1000)
-                movieEnd = round(movieEnd)
+            #把最后结尾的小段截出来
+            st = round(start/1000)
+            if st < movieEnd:
                 self.__genClipVideo(videoC,st,movieEnd,outputD)
 
 

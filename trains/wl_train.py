@@ -10,10 +10,11 @@ from wavdatas.FaceDataset import FaceDataset
 parser = argparse.ArgumentParser(description='code to train the wav2lip with visual quality discriminator')
 parser.add_argument('--data_root',help='Root folder of the preprocessed datasets',required=True,type=str)
 parser.add_argument('--checkpoint_dir',help='checkpoint files will be saved to this directory',required=True,type=str)
-parser.add_argument('syncnet_checkpoint_path',help='Load he pre-trained Expert discriminator',required=True,type=str)
+parser.add_argument('--syncnet_checkpoint_path',help='Load he pre-trained Expert discriminator',required=True,type=str)
 
-parser.add_argument('checkpoint',help='Resume generator from this checkpoint',default=None,type=str)
+parser.add_argument('--checkpoint',help='Resume generator from this checkpoint',default=None,type=str)
 parser.add_argument('--disc_checkpoint_path',help='Resume qulity disc from this checkpoint',default=None,type=str)
+parser.add_argument('--config_file',help='The train config file',default='../configs/train_config_96.yaml',required=True,type=str)
 
 parser.add_argument('--gpunum',help='Resume qulity disc from this checkpoint',default=0,type=int)
 args = parser.parse_args()
