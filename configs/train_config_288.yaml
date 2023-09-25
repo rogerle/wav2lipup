@@ -1,7 +1,59 @@
 train_config:
-  #audio train config
+  ########################################audio train config##################################
+  #Number of mel-spectrogram channels and local conditioning dimensionality
+  # Whether to rescale audio prior to preprocessing
+  # Rescaling value
   num_mels: 80
   rescale: True
+  resacling_max: 0.9
+  # Extra window size is filled with 0 paddings to match this parameter
+  # For 16000Hz, 200 = 12.5 ms (0.0125 * sample_rate)
+  # For 16000Hz, 800 = 50 ms (If None, win_size = n_fft) (0.05 * sample_rate)
+  # 16000Hz (corresponding to librispeech) (sox --i <filename>)
+  n_fft: 800
+  hop_size: 200
+  win_size: 800
+  sample_rate: 16000
+  # Can replace hop_size parameter. (Recommended: 12.5)
+  frame_shift_ms: None
+  # Mel and Linear spectrograms normalization/scaling and clipping
+  signal_normalization: True
+  allow_clipping_in_normalization: True
+  symmetric_mels: True
+  # Whether to scale the data to be symmetric around 0. (Also multiplies the output range by 2,
+  # faster and cleaner convergence
+  max_abs_value: 4.
 
+  preemphasize: True # whether to apply filter
+  preemphasis: 0.97
+
+  min_level_db: -100
+  ref_level_db: 20
+  fmin: 55
+  fmax: 7600
+  syncnet_mel_step_size: 16
+  syncnet_T: 5
+  #########################################img training parameters###################################
   #image training parameters,this is the 96*96 face traning
-  img_size: 96
+  img_size: 288
+  fps: 25
+
+  batch_size: 4
+  init_learning_rate: 0.0001
+  epochs: 1000000
+  num_works: 8
+  checkpoint_interval: 1000
+  eval_interval: 1000
+  save_optimizer_state: True
+
+  #####################################sycnet parameters##########################################
+  syncnet_wt: 0.03
+  syncnet_batch_size: 16
+  syncnet_learning_rate: 0.0001
+  syncnet_checkpoint_interval: 1000
+  syncnet_eval_interval: 1000
+  #####################################Disc parameters##########################################
+  disc_wt: 0.07
+  disc_init_learning_rate: 0.0001
+
+
