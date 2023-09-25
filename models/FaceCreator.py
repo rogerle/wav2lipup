@@ -11,7 +11,7 @@ class FaceCreator(nn.Module):
         super(FaceCreator,self).__init__()
 
         self.face_encoder_block = nn.ModuleList([
-                nn.Sequential(BaseConv2D(3, 16, 7, 1, 3)), #输入大小 288*288
+                nn.Sequential(BaseConv2D(6, 16, 7, 1, 3)), #输入大小 288*288
                 # 转成 144*144
                 nn.Sequential(BaseConv2D(16, 64, 3, 2, 1),
                               BaseConv2D(64, 64, 3, 1, 1, residual=True)),

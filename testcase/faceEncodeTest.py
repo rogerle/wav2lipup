@@ -17,9 +17,7 @@ class FaceEncode(unittest.TestCase):
 
         # andom_data = torch.randn([1,3,96,96])
         # output = fe.forward(andom_data)
-        summary(fe,(1,3,288,288))
-        print(torch.cuda.is_available())
-        print(torch.cuda.memory_summary(0,abbreviated=True))
+        summary(fe,(1,6,288,288))
 
         #img = output.detach().numpy()
         #plt.imshow(img,interpolation='none',cmap='Blues')
