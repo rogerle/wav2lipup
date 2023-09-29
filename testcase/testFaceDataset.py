@@ -6,7 +6,7 @@ import librosa.display
 import torch
 import torchaudio
 from torch.utils.data import DataLoader
-from wavdatas.FaceDataset import FaceDataset
+from wldatasets.FaceDataset import FaceDataset
 import matplotlib.pyplot as plt
 from process_util.ParamsUtil import ParamsUtil
 

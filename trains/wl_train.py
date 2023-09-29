@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from models.FaceCreator import FaceCreator
 from process_util.ParamsUtil import ParamsUtil
-from wavdatas.FaceDataset import FaceDataset
+from wldatasets.FaceDataset import FaceDataset
 
 parser = argparse.ArgumentParser(description='code to train the wav2lip with visual quality discriminator')
 parser.add_argument('--data_root',help='Root folder of the preprocessed datasets',required=True,type=str)
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
 
     #dataset
-    train_dataset = FaceDataset(args.data_root,type='train',img_size=param.img_size)
+    train_dataset = FaceDataset(args.data_root, run_type='train', img_size=param.img_size)
 
     train_data_loader = DataLoader(train_dataset,
                                    batch_size=param.batch_size,

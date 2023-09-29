@@ -1,2 +1,4 @@
-librosa
+pytorch
+pytorchaudio
+pytorchvision
 pydub

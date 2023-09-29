@@ -14,14 +14,14 @@ from process_util.ParamsUtil import ParamsUtil
 class FaceDataset(Dataset):
 
     def __init__(self, data_dir,
-                 type: str = 'train',
+                 run_type: str = 'train',
                  **kwargs):
         """
             :param data_dir: 数据文件的根目录
             :param video_info: 所有视频文件的目录信息，一般放在train.txt文件中。
         """
         self.data_dir = data_dir
-        self.type = type
+        self.type = run_type
         self.img_size = kwargs['img_size']
         self.dirlist = self.__get_split_video_list()
         self.hp = ParamsUtil()

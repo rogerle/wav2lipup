@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 from models.Discriminator import Discriminator
 from models.FaceCreator import FaceCreator
-from wavdatas.FaceDataset import FaceDataset
+from wldatasets.FaceDataset import FaceDataset
 
 
 class FaceEncode(unittest.TestCase):
