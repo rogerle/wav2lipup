@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from torch.nn import functional as F
 from models.BaseConv2D import BaseConv2D
@@ -14,7 +15,7 @@ class SyncNetModel(nn.Module):
             BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
 
-            BaseConv2D(64, 128, kernel_size=3, stride=2, padding=1),
+            BaseConv2D(64, 128, kernel_size=5, stride=4, padding=1),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
@@ -27,7 +28,7 @@ class SyncNetModel(nn.Module):
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
 
-            BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),
+            BaseConv2D(512, 512, kernel_size=3, stride=3, padding=1),
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0),
             BaseConv2D(512, 512, kernel_size=1, stride=1, padding=0)
         )

@@ -1,0 +1,32 @@
+import unittest
+
+from torch import optim
+from torch.utils.data import DataLoader
+
+from models.SyncNetModel import SyncNetModel
+from process_util.ParamsUtil import ParamsUtil
+from trains import syncnet_train
+from wldatasets.SyncNetDataset import SyncNetDataset
+
+
+class TestSyncnetTrain(unittest.TestCase):
+
+    def testGPUTrain(self):
+        device='cuda'
+        data_root='../data/test_data/pr_data'
+        param = ParamsUtil()
+        train_dataset = SyncNetDataset(data_root, run_type='train', img_size=288)
+        val_dataset = SyncNetDataset(data_root, run_type='eval', img_size=288)
+        train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
+                                      num_workers=param.num_works)
+        val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
+                                    num_workers=param.num_works)
+
+        model = SyncNetModel().to(device)
+        print("SyncNet Model's Total trainable params {}".format(
+            sum(p.numel() for p in model.parameters() if p.requires_grad)))
+        optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad], lr=param.syncnet_learning_rate)
+        start_step = 0
+        start_epoch = 0
+        syncnet_train.train(device, model, train_dataloader, val_dataloader, optimizer, '../data/test_data/checkpoint', start_step, start_epoch)
+

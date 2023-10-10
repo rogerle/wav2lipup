@@ -33,6 +33,7 @@ train_config:
   fmax: 7600
   syncnet_mel_step_size: 16
   syncnet_T: 5
+  use_lws: False
   #########################################img training parameters###################################
   #image training parameters,this is the 96*96 face traning
   img_size: 288
@@ -41,7 +42,7 @@ train_config:
   batch_size: 4
   init_learning_rate: 0.0001
   epochs: 1000000
-  num_works: 8
+  num_works: 1
   checkpoint_interval: 1000
   eval_interval: 1000
   save_optimizer_state: True

@@ -66,7 +66,7 @@ class FaceDataset(Dataset):
 
             wavfile = self.data_dir + '/' + vid + '/audio.wav'
             try:
-                wavform, sf = torchaudio.load(wavfile)
+                wavform, sf = torchaudio.load(wavfile,channels_first=True)
                 specgram = torchaudio.transforms.MelSpectrogram(sample_rate=hp.sample_rate,
                                                                 n_fft=hp.n_fft,
                                                                 hop_length=hp.hop_size,
@@ -76,8 +76,7 @@ class FaceDataset(Dataset):
                                                                 f_max=hp.fmax,
                                                                 n_mels=hp.num_mels,
                                                                 normalized=hp.signal_normalization)
-                orig_mel = specgram(wavform).permute(2,1,0)
-                orig_mel = np.asarray(orig_mel.numpy())
+                orig_mel = specgram(wavform).permute(2,1,0).numpy()
             except Exception as e:
                 continue
 

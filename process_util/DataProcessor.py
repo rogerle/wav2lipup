@@ -1,5 +1,7 @@
 import cv2
 from pathlib import Path
+
+import torchaudio
 from moviepy.editor import *
 from tqdm import tqdm
 
@@ -38,7 +40,10 @@ class DataProcessor():
         audio_clip = AudioFileClip(str(vfile))
         audiofile = split_dir+'/audio.wav'
         audio_clip.write_audiofile(audiofile)
-
+        wavform,sf = torchaudio.load(audiofile)
+        resample = torchaudio.transforms.Resample(sf,16000)
+        wavform = resample(wavform)
+        torchaudio.save(audiofile,wavform,sample_rate=16000)
     """
         提取人脸图片放入数据处理文件
     """

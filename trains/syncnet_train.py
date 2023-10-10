@@ -13,10 +13,11 @@ from process_util.ParamsUtil import ParamsUtil
 
 import argparse
 
+
 param = ParamsUtil()
 
-
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer):
+
     print("load checkpoint from: {}".format(checkpoint_path))
     if param.gpunum > 0:
         checkpoint = torch.load(checkpoint_path)
@@ -76,6 +77,7 @@ def eval_model(val_dataloader, step, evl_interval,device, model, checkpoint_dir)
 
 
 def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir,start_step,start_epoch):
+
     step = start_step
     epoch = start_epoch
     numepochs = param.epochs
@@ -114,6 +116,9 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                 with torch.no_grad():
                     eval_model(val_dataloader,step,eval_interval,device,model,checkpoint_dir)
 
+            prog_bar.set_description('Syncnet Train Loss: {}'.format(running_loss/(step +1 )))
+
+        epoch +=1
 
 def main():
     args = parse_args()

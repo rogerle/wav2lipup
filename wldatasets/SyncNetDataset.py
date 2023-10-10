@@ -1,6 +1,7 @@
 import random
 
 import cv2
+import numpy
 import numpy as np
 import torch
 from pathlib import Path
@@ -8,11 +9,12 @@ from pathlib import Path
 import torchaudio
 from torch.utils.data import Dataset
 
+from process_util import audio
 from process_util.ParamsUtil import ParamsUtil
 
 
 class SyncNetDataset(Dataset):
-
+    hp = ParamsUtil()
     def __init__(self, data_dir,
                  run_type: str = 'train',
                  **kwargs):
@@ -20,7 +22,6 @@ class SyncNetDataset(Dataset):
         self.run_type = run_type
         self.dirlist = self.__get_split_video_list()
         self.img_size = kwargs['img_size']
-        self.hp = ParamsUtil()
 
     def __getitem__(self, idx):
         while 1:
@@ -69,19 +70,24 @@ class SyncNetDataset(Dataset):
             vid = self.dirlist[audio_index]
 
             wavfile = self.data_dir + '/' + vid + '/audio.wav'
+            """try:
+                wav = audio.load_wav(wavfile, hp.sample_rate)
+
+                orig_mel = audio.melspectrogram(wav).T
+            except Exception as e:
+                continue"""
+
             try:
                 wavform, sf = torchaudio.load(wavfile)
                 specgram = torchaudio.transforms.MelSpectrogram(sample_rate=hp.sample_rate,
                                                                 n_fft=hp.n_fft,
                                                                 hop_length=hp.hop_size,
                                                                 win_length=hp.win_size,
-                                                                power=2,
                                                                 f_min=hp.fmin,
                                                                 f_max=hp.fmax,
-                                                                n_mels=hp.num_mels,
-                                                                normalized=hp.signal_normalization)
-                orig_mel = specgram(wavform).permute(2, 1, 0)
-                orig_mel = np.asarray(orig_mel.numpy())
+                                                                n_mels=hp.num_mels)
+                orig_mel = specgram(wavform)[0]
+                orig_mel = orig_mel.t().numpy()
             except Exception as e:
                 continue
 
@@ -94,13 +100,12 @@ class SyncNetDataset(Dataset):
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
             x = x[:, x.shape[1] // 2:]
-
             if torch.cuda.is_available() is True:
                 x = torch.cuda.FloatTensor(x)
-                mel = torch.cuda.FloatTensor(np.transpose(mel, (2, 1, 0))).unsqueeze(0)
+                mel = torch.cuda.FloatTensor(np.transpose(mel,(1,0))).unsqueeze(0)
             else:
                 x = torch.FloatTensor(x)
-                mel = torch.FloatTensor(np.transpose(mel, (2, 1, 0))).unsqueeze(0)
+                mel = torch.FloatTensor(np.transpose(mel,(1,0))).unsqueeze(0)
 
             return x, mel, y
 
@@ -108,7 +113,7 @@ class SyncNetDataset(Dataset):
         return len(self.dirlist)
 
     def __get_split_video_list(self):
-        load_file = self.data_dir + '/{}.txt'.format(self.type)
+        load_file = self.data_dir + '/{}.txt'.format(self.run_type)
         dirlist = []
         with open(load_file, 'r') as f:
             for line in f:

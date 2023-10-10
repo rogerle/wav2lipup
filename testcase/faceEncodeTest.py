@@ -19,13 +19,11 @@ class FaceEncode(unittest.TestCase):
 
     def testfaceEncode(self):
         fe = FaceCreator()
-        disc = Discriminator()
-        # andom_data = torch.randn([1,3,96,96])
-        # output = fe.forward(andom_data)
-        sData = FaceDataset('../data/test_data/pr_data', img_size=288)
-        test_loader = DataLoader(sData)
-        for x,y,mel1,invid_mels in test_loader:
-            summary(disc,x.size())
+        # random_data = torch.randn([1,3,96,96])
+        # output = fe.forward(random_data)
+        audios=torch.randn(5,1,80,16)
+        faces =torch.randn(5,6,288,288)
+        summary(fe,input_data=(audios,faces))
 
         print(torch.cuda.is_available())
         print(torch.cuda.memory_summary(0,abbreviated=True))

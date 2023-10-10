@@ -11,20 +11,20 @@ class FaceCreator(nn.Module):
         super(FaceCreator,self).__init__()
 
         self.face_encoder_block = nn.ModuleList([
-                nn.Sequential(BaseConv2D(6, 16, 7, 1, 3)), #输入大小 [5 6 288 288]
+            nn.Sequential(BaseConv2D(6, 16, 7, 1, 3)), #输入大小 [5 6 288 288]
 
-                # 转成 48 48
-                nn.Sequential(BaseConv2D(16, 32, 3, 2, 1),
-                              BaseConv2D(32, 32, 3, 1, 1, residual=True)),
-                # 转成 24 24
-                nn.Sequential(BaseConv2D(32, 64, 3, 2, 1),
-                              BaseConv2D(64, 64, 3, 1, 1, residual=True),
-                              BaseConv2D(64, 64, 3, 1, 1, residual=True),
-                              BaseConv2D(64, 64, 3, 1, 1, residual=True)),
-                # 转成 12 12
-                nn.Sequential(BaseConv2D(64, 128, 3, 2, 1),
-                              BaseConv2D(128, 128, 3, 1, 1, residual=True),
-                              BaseConv2D(128, 128, 3, 1, 1, residual=True)),
+            # 转成 72 72
+            nn.Sequential(BaseConv2D(16, 32, 3, 4, 1),
+                          BaseConv2D(32, 32, 3, 1, 1, residual=True)),
+            # 转成 18 18
+            nn.Sequential(BaseConv2D(32, 64, 3, 4, 1),
+                          BaseConv2D(64, 64, 3, 1, 1, residual=True),
+                          BaseConv2D(64, 64, 3, 1, 1, residual=True),
+                          BaseConv2D(64, 64, 3, 1, 1, residual=True)),
+            # 转成 4 4
+            nn.Sequential(BaseConv2D(64, 128, 3, 2, 1),
+                          BaseConv2D(128, 128, 3, 1, 1, residual=True),
+                          BaseConv2D(128, 128, 3, 1, 1, residual=True)),
 
             nn.Sequential(BaseConv2D(128, 256, 3, 2, 1),
                           BaseConv2D(256, 256, 3, 1, 1, residual=True),
