@@ -6,8 +6,6 @@ from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from moviepy.editor import *
 
-from pydub import AudioSegment
-from pydub.silence import detect_nonsilent
 from tqdm import tqdm
 
 '''
