@@ -35,10 +35,9 @@ class PreProcessor():
             parentPath = Path(video).parent
             filename = Path(video).stem
             jsonfile = Path.joinpath(parentPath,filename).with_suffix('.json')
-            if Path(jsonfile).exists() is not True:
-                print('generate the viedo asr file:{}'.format(jsonfile))
-                self.__genTimeStampByASR(video=video,
-                                        asr=asr_func)
+            print('generate the viedo asr file:{}'.format(jsonfile))
+            self.__genTimeStampByASR(video=video,
+                                     asr=asr_func)
             with open(jsonfile,'r') as f:
                 dicts = json.load(f)
             timestamps = dicts['timestamps']
