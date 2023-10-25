@@ -39,9 +39,17 @@ def preProcess(inputdir,outputdir):
                                     ext='mp4')
 
 
-def process_data(inputdir,outputdir):
+def process_data(inputdir,outputdir,device):
     dataProcessor = DataProcessor()
-    pass
+    files=[]
+    for f in Path.glob(Path(inputdir),'**/*.mp4'):
+        if f.is_file():
+            files.append(f)
+
+    for i,fp in tqdm(enumerate(files)):
+        print('process the video file: {}'.format(fp))
+        dataProcessor.processVideoFile(str(fp),device=device,processed_data_root=outputdir)
+
 
 
 def main():
@@ -52,16 +60,21 @@ def main():
     preProcess_dir = data_root+'/preProcessed_data'
     process_dir = data_root+'/processed_data'
 
+    if args.gpu_num == 0:
+        device='cpu'
+    else:
+        device='gpu'
+
     if p_step==0:
         orignal_process(original_dir)
     elif p_step == 1:
         preProcess(original_dir,preProcess_dir)
     elif p_step == 2:
-        process_data(preProcess_dir,process_dir)
+        process_data(preProcess_dir,process_dir,device)
     elif p_step == 3:
         orignal_process(original_dir)
         preProcess(original_dir, preProcess_dir)
-        process_data(preProcess_dir, process_dir)
+        process_data(preProcess_dir, process_dir,device)
     else:
         print('wrong step number, finished!')
 
@@ -72,6 +85,7 @@ def parse_args():
         description="process the datasets for wav2lip")
     parser.add_argument("--data_root", help='Root folder of the preprocessed dataset', required=True,type=str)
     parser.add_argument("--process_step", help='process data\'s step 0 orig,1.pre 2.pro 3.all', default=0,type=int)
+    parser.add_argument("--gpu_num", help='gpu number', default=0, type=int)
     args = parser.parse_args()
 
     return args
