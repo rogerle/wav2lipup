@@ -145,6 +145,7 @@ class PreProcessor():
 
         wname = Path(video).name.replace('.mp4','.wav')
         temp_dir = os.environ.get('TEMP')
+        print('wavefile put in temp:{}'.format(temp_dir))
         wavfile = temp_dir+'/'+wname
         audio_clip = AudioFileClip(str(video))
         audio_clip.write_audiofile(wavfile)
