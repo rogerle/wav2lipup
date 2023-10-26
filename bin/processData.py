@@ -55,6 +55,7 @@ def train_file_write(inputdir):
     train_txt = inputdir+'/train.txt'
     eval_txt = inputdir+'/eval.txt'
     for line in Path.glob(Path(inputdir), '*/*'):
+
         if line.is_dir():
             line = PurePath.as_posix(line)
             input_line=str(line).replace(inputdir+'/','')
