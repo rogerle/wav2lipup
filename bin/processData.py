@@ -76,16 +76,21 @@ def main():
         device='gpu'
 
     if p_step==0:
+        print("produce the step {}".format(p_step))
         orignal_process(original_dir)
     elif p_step == 1:
+        print("produce the step {}".format(p_step))
         preProcess(original_dir,preProcess_dir)
     elif p_step == 2:
+        print("produce the step {}".format(p_step))
         process_data(preProcess_dir,process_dir,device)
     elif p_step == 3:
+        print("produce the step {}".format(p_step))
         orignal_process(original_dir)
         preProcess(original_dir, preProcess_dir)
         process_data(preProcess_dir, process_dir,device)
     elif p_step == 4:
+        print("produce the step {}".format(p_step))
         train_file_write(process_dir)
     else:
         print('wrong step number, finished!')
