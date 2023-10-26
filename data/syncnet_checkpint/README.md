@@ -1,0 +1,1 @@
+syncnet的checkpoint存放目录
