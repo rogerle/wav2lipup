@@ -54,11 +54,12 @@ def process_data(inputdir,outputdir,device):
 def train_file_write(inputdir):
     train_txt = inputdir+'/train.txt'
     eval_txt = inputdir+'/eval.txt'
+    Path(train_txt).write_text('')
+    Path(eval_txt).write_text('')
     for line in Path.glob(Path(inputdir), '*/*'):
-
         if line.is_dir():
-            line = PurePath.as_posix(line)
-            input_line=str(line).replace(inputdir+'/','')
+            dirs = line.parts
+            input_line=str(dirs[-2]+'/'+dirs[-1])
             with open(train_txt,'a') as f:
                 f.write(input_line+'\n')
             with open(eval_txt,'a') as f:
