@@ -101,11 +101,11 @@ class SyncNetDataset(Dataset):
             x = x.transpose(2, 0, 1)
             x = x[:, x.shape[1] // 2:]
             if torch.cuda.is_available() is True:
-                x = torch.cuda.FloatTensor(x)
-                mel = torch.cuda.FloatTensor(np.transpose(mel,(1,0))).unsqueeze(0)
+                x = torch.tensor(x,dtype=torch.float,device='cuda')
+                mel = torch.tensor(np.transpose(mel,(1,0)),dtype=torch.float,device='cuda').unsqueeze(0)
             else:
-                x = torch.FloatTensor(x)
-                mel = torch.FloatTensor(np.transpose(mel,(1,0))).unsqueeze(0)
+                x = torch.tensor(x,dtype=torch.float)
+                mel = torch.tensor(np.transpose(mel,(1,0)),dtype=torch.float).unsqueeze(0)
 
             return x, mel, y
 
