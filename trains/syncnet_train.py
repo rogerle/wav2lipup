@@ -38,7 +38,7 @@ def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer):
 
 def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 
-    path = Path.joinpath(checkpoint_dir,'/sync_checkpoint_step{:09d}.pth'.format(step))
+    path = Path(checkpoint_dir+'/sync_checkpoint_step{:09d}.pth'.format(step))
     optimizer_state = optimizer.state_dict() if param.save_optimizer_state else None
     torch.save({
         "state_dict":model.state_dict(),
@@ -49,8 +49,8 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
     print("save the checkpoint step {}".format(path))
 
 
-def eval_model(val_dataloader, step, evl_interval,device, model, checkpoint_dir):
-    eval_steps = evl_interval + 400
+def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
+    eval_steps = global_step
     losses = []
     print('Evaluating for {} steps'.format(eval_steps))
     while 1:
@@ -78,7 +78,7 @@ def eval_model(val_dataloader, step, evl_interval,device, model, checkpoint_dir)
 
 def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir,start_step,start_epoch):
 
-    step = start_step
+    gloab_step = start_step
     epoch = start_epoch
     numepochs = param.epochs
     checkpoint_interval = param.syncnet_checkpoint_interval
@@ -106,15 +106,15 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
 
             optimizer.step()
 
-            step+=1
+            gloab_step=gloab_step+1
             running_loss = loss.item()
 
-            if step % checkpoint_interval == 0:
-                save_checkpoint(model,optimizer,step,checkpoint_dir,epoch)
+            if gloab_step % checkpoint_interval == 0:
+                save_checkpoint(model,optimizer,gloab_step,checkpoint_dir,epoch)
 
-            if step % eval_interval == 0:
+            if gloab_step % eval_interval == 0:
                 with torch.no_grad():
-                    eval_model(val_dataloader,step,eval_interval,device,model,checkpoint_dir)
+                    eval_model(val_dataloader,gloab_step,device,model,checkpoint_dir)
 
             prog_bar.set_description('Syncnet Train Loss: {}'.format(running_loss/(step +1 )))
 
