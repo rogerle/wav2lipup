@@ -127,7 +127,6 @@ def main():
     checkpoint_path = args.checkpoint_path
 
     Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
-    Path(checkpoint_path).mkdir(parents=True, exist_ok=True)
 
     train_dataset = SyncNetDataset(args.data_root, run_type='train', img_size=288)
     val_dataset = SyncNetDataset(args.data_root, run_type='val', img_size=288)
