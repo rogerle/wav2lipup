@@ -87,7 +87,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
 
     while epoch < numepochs:
         running_loss = 0
-        prog_bar = tqdm(enumerate(train_dataloader))
+        prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = True)
         for step,(x,mel,y) in prog_bar:
             model.train()
             optimizer.zero_grad()
@@ -116,8 +116,8 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                 with torch.no_grad():
                     eval_model(val_dataloader,gloab_step,device,model,checkpoint_dir)
 
-            prog_bar.set_description('Syncnet Train Loss: {}'.format(running_loss/(step +1 )))
-
+            prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch,numepochs))
+            prog_bar.set_postfix(train_loss=running_loss/(step + 1))
         epoch +=1
 
 def main():
