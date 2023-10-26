@@ -9,7 +9,7 @@
 
 """
 import argparse
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from tqdm import tqdm
 
@@ -54,11 +54,14 @@ def process_data(inputdir,outputdir,device):
 def train_file_write(inputdir):
     train_txt = inputdir+'/train.txt'
     eval_txt = inputdir+'/eval.txt'
-    for line in Path.glob(Path(inputdir), '**/*.mp4'):
-        with open(train_txt,'a') as f:
-            f.write(str(line))
-        with open(eval_txt,'a') as f:
-            f.write(str(line))
+    for line in Path.glob(Path(inputdir), '*/*'):
+        if line.is_dir():
+            line = PurePath.as_posix(line)
+            input_line=str(line).replace(inputdir+'/','')
+            with open(train_txt,'a') as f:
+                f.write(input_line+'\n')
+            with open(eval_txt,'a') as f:
+                f.write(input_line+'\n')
 
 
 

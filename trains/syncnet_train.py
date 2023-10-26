@@ -167,7 +167,7 @@ def parse_args():
     parser.add_argument("--data_root", help='Root folder of the preprocessed dataset', required=True)
     parser.add_argument("--checkpoint_dir", help='Save checkpoints to this directory', required=True, type=str)
     parser.add_argument("--checkpoint_path", help='Resume from this checkpoint', default=None, type=str)
-    parser.add_argument('--config_file', help='The train config file', default='../configs/train_config_96.yaml',
+    parser.add_argument('--config_file', help='The train config file', default='../configs/train_config_288.yaml',
                         required=True, type=str)
     parser.add_argument('--gpunum', help='Resume qulity disc from this checkpoint', default=0, type=int)
 
