@@ -51,6 +51,16 @@ def process_data(inputdir,outputdir,device):
         dataProcessor.processVideoFile(str(fp),device=device,processed_data_root=outputdir)
 
 
+def train_file_write(inputdir):
+    train_txt = inputdir+'/train.txt'
+    eval_txt = inputdir+'/eval.txt'
+    for line in Path.glob(Path(inputdir), '**/*.mp4'):
+        with open(train_txt,'a') as f:
+            f.write(str(line))
+        with open(eval_txt,'a') as f:
+            f.write(str(line))
+
+
 
 def main():
     args = parse_args()
@@ -75,6 +85,8 @@ def main():
         orignal_process(original_dir)
         preProcess(original_dir, preProcess_dir)
         process_data(preProcess_dir, process_dir,device)
+    elif p_step == 4:
+        train_file_write(process_dir)
     else:
         print('wrong step number, finished!')
 
