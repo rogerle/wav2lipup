@@ -129,7 +129,7 @@ def main():
     Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
 
     train_dataset = SyncNetDataset(args.data_root, run_type='train', img_size=288)
-    val_dataset = SyncNetDataset(args.data_root, run_type='val', img_size=288)
+    val_dataset = SyncNetDataset(args.data_root, run_type='eval', img_size=288)
 
     train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
                                   num_workers=param.num_works)
