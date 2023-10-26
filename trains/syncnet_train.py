@@ -134,7 +134,7 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
                                   num_workers=param.num_works)
     val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
-                                num_workers=param.num_work)
+                                num_workers=param.num_works)
 
     if args.gpunum > 0:
         device = torch.device('cuda')
