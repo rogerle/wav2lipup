@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from process_util.ParamsUtil import ParamsUtil
 import torch.multiprocessing
 import argparse
-
+from visualdl import LogWriter
 
 param = ParamsUtil()
 
@@ -52,28 +52,29 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
     eval_steps = global_step
     losses = []
-    print('Evaluating for {} steps'.format(eval_steps))
-    while 1:
-        for vstep,(x,mel,y) in enumerate(val_dataloader):
-            model.eval()
+    with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
+        while 1:
+            for vstep,(x,mel,y) in enumerate(val_dataloader):
+                model.eval()
 
-            x = x.to(device)
-            mel = mel.to(device)
-            y = y.to(device)
+                x = x.to(device)
+                mel = mel.to(device)
+                y = y.to(device)
 
-            a,v = model(mel,x)
+                a,v = model(mel,x)
 
-            logloss = nn.BCELoss()
-            d = F.cosine_similarity(a,v)
-            loss = logloss(d.unsqueeze(1),y)
+                logloss = nn.BCELoss()
+                d = F.cosine_similarity(a,v)
+                loss = logloss(d.unsqueeze(1),y)
 
-            losses.append(loss.item())
+                losses.append(loss.item())
 
-            if vstep > eval_steps: break
+                if vstep > eval_steps: break
 
-        averaged_loss = sum(losses)/len(losses)
-        print(averaged_loss)
-        return
+            averaged_loss = sum(losses)/len(losses)
+            writer.add_scalar(tag='eval/loss', step=eval_steps, value=averaged_loss)
+            print(averaged_loss)
+            return
 
 
 def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir,start_step,start_epoch):
@@ -84,41 +85,43 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
     checkpoint_interval = param.syncnet_checkpoint_interval
     eval_interval = param.syncnet_eval_interval
 
+    with LogWriter(logdir="../logs/syncnet_train/train") as writer:
+        while epoch < numepochs:
+            running_loss = 0
+            prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = True)
+            for step,(x,mel,y) in prog_bar:
+                model.train()
+                optimizer.zero_grad()
 
-    while epoch < numepochs:
-        running_loss = 0
-        prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = True)
-        for step,(x,mel,y) in prog_bar:
-            model.train()
-            optimizer.zero_grad()
+                #transform data to cuda
+                x= x.to(device)
+                mel = mel.to(device)
+                a,v = model(mel,x)
+                y = y.to(device)
 
-            #transform data to cuda
-            x= x.to(device)
-            mel = mel.to(device)
-            a,v = model(mel,x)
-            y = y.to(device)
+                #计算loss
+                logloss = nn.BCELoss()
+                d = F.cosine_similarity(a,v)
+                loss = logloss(d.unsqueeze(1),y)
+                loss.backward()
 
-            #计算loss
-            logloss = nn.BCELoss()
-            d = F.cosine_similarity(a,v)
-            loss = logloss(d.unsqueeze(1),y)
-            loss.backward()
+                optimizer.step()
 
-            optimizer.step()
+                gloab_step=gloab_step+1
+                running_loss = loss.item()
 
-            gloab_step=gloab_step+1
-            running_loss = loss.item()
+                if gloab_step % checkpoint_interval == 0:
+                    save_checkpoint(model,optimizer,gloab_step,checkpoint_dir,epoch)
 
-            if gloab_step % checkpoint_interval == 0:
-                save_checkpoint(model,optimizer,gloab_step,checkpoint_dir,epoch)
+                if gloab_step % eval_interval == 0:
+                    with torch.no_grad():
+                        eval_model(val_dataloader,gloab_step,device,model,checkpoint_dir)
 
-            if gloab_step % eval_interval == 0:
-                with torch.no_grad():
-                    eval_model(val_dataloader,gloab_step,device,model,checkpoint_dir)
-
-            prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch,numepochs))
-            prog_bar.set_postfix(train_loss=running_loss/(step + 1))
-        epoch +=1
+                prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch,numepochs))
+                prog_bar.set_postfix(train_loss=running_loss/(step + 1))
+                writer.add_scalar(tag='train/running_loss', step=gloab_step, value=running_loss)
+                writer.add_scalar(tag='train/loss', step=gloab_step, value=running_loss / (step + 1))
+            epoch +=1
 
 def main():
     args = parse_args()
