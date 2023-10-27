@@ -21,7 +21,7 @@ def orignal_process(inputdir):
     dirs = []
     root = Path(inputdir)
     # 把目录下的子目录都拿出来
-    for dir in Path.rglob(root, '*'):
+"""    for dir in Path.rglob(root, '*'):
         if dir.is_dir():
             dirs.append(str(dir))
     # 重命名所有文件，把文件转换成6位数字的文件名，格式为000000.MP4
@@ -30,7 +30,7 @@ def orignal_process(inputdir):
         for f in Path.glob(Path(dir), '**/*.mp4'):
             j = j + 1
             newfilename = str(f.parent) + '/{0:06}.mp4'.format(j)
-            Path.rename(Path(str(f)), Path(newfilename))
+            Path.rename(Path(str(f)), Path(newfilename))"""
 
 
 def preProcess(inputdir, outputdir):

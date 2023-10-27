@@ -30,7 +30,8 @@ class PreProcessor():
                                            type=ext)
         asr_func = pipeline(task=Tasks.auto_speech_recognition,
                             model=self.model_id)
-        for video in tqdm(videoFiles):
+        print('Total process {} files'.format(len(videoFiles)))
+        for video in videoFiles:
             #看是否已经有时间戳，没有的话就做时间戳文件
             parentPath = Path(video).parent
             filename = Path(video).stem
@@ -75,7 +76,7 @@ class PreProcessor():
         ext = kwargs.get('ext')
 
         videos = self.__getProcessFils(input_dir,ext)
-        for video in videos:
+        for video in tqdm(videos):
             outputD=self.__genOutputDir(input_dir,output_dir,video)
             i=0
             videoC = VideoFileClip(str(video))
@@ -132,7 +133,8 @@ class PreProcessor():
         fileType = type
         files = []
         for file in Path.glob(Path(inputPath),'**/*.{}'.format(fileType)):
-            files.append(file)
+            if file.is_file():
+                files.append(file)
         return files
 
     '''
