@@ -40,10 +40,15 @@ class DataProcessor():
         audio_clip = AudioFileClip(str(vfile))
         audiofile = split_dir+'/audio.wav'
         audio_clip.write_audiofile(audiofile)
-        wavform,sf = torchaudio.load(audiofile)
-        resample = torchaudio.transforms.Resample(sf,16000)
-        wavform = resample(wavform)
-        torchaudio.save(audiofile,wavform,sample_rate=16000)
+
+        audio_meta_f= split_dir+'/audio_meta.info'
+        audio_meta = torchaudio.info(audiofile)
+        with open(audio_meta_f,'w') as f:
+            f.write(str(audio_meta))
+        print('audio info {}'.format(audio_meta))
+        #resample = torchaudio.transforms.Resample(sf,16000)
+        #wavform = resample(wavform)
+        #torchaudio.save(audiofile,wavform,sample_rate=16000)
     """
         提取人脸图片放入数据处理文件
     """
