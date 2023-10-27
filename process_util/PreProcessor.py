@@ -135,6 +135,7 @@ class PreProcessor():
         for file in Path.glob(Path(inputPath),'**/*.{}'.format(fileType)):
             if file.is_file():
                 files.append(file)
+        files.sort()
         return files
 
     '''
