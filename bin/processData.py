@@ -80,16 +80,16 @@ def main():
     else:
         device = 'gpu'
 
-    if p_step == 1:
+    if p_step == 0:
         print("produce the step {}".format(p_step))
         orignal_process(original_dir)
-    elif p_step == 2:
+    elif p_step == 1:
         print("produce the step {}".format(p_step))
         preProcess(original_dir, preProcess_dir)
-    elif p_step == 3:
+    elif p_step == 2:
         print("produce the step {}".format(p_step))
         process_data(preProcess_dir, process_dir, device)
-    elif p_step == 4:
+    elif p_step == 3:
         print("produce the step {}".format(p_step))
         train_file_write(process_dir)
     else:
@@ -101,7 +101,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="process the datasets for wav2lip")
     parser.add_argument("--data_root", help='Root folder of the preprocessed dataset', required=True, type=str)
-    parser.add_argument("--process_step", help='process data\'s step 0 orig,1.pre 2.pro 3.all', default=0, type=int)
+    parser.add_argument("--process_step", help='process data\'s step 1 orig,2.pre 3.pro 4.write file', default=0, type=int)
     parser.add_argument("--gpu_num", help='gpu number', default=0, type=int)
     args = parser.parse_args()
 
