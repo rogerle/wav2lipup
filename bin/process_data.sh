@@ -3,6 +3,8 @@
 TEMP=/tmp
 stage=0
 stop_stage=100
+export IMAGEIO_FFMPEG_EXE=/usr/local/bin/ffmpeg
+export IMAGEIO_USE_GPU=True
 
 source ./parse_options.sh || exit 1
 
