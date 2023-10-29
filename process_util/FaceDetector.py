@@ -4,7 +4,7 @@ from modelscope.utils.constant import Tasks
 
 class FaceDetector():
     # 使用modelscope的mogofacedetector模型进行人脸检测
-    model_id = 'damo/cv_resnet101_face-detection_cvpr22papermogface'
+    model_id = 'damo/cv_resnet50_face-detection_retinaface'
 
     # 初始化人脸热别模型，利用这个模型来识别人脸
     def __init__(self):

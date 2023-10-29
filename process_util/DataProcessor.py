@@ -1,6 +1,9 @@
+import pickle
+
 import cv2
 from pathlib import Path
 
+import numpy as np
 import torchaudio
 from moviepy.editor import *
 from tqdm import tqdm
@@ -57,6 +60,8 @@ class DataProcessor():
 
     def __extract_face_img(self, frames, split_dir):
         prog_bar = tqdm(enumerate(frames), total=len(frames), leave=False)
+        faces={}
+        face_file = split_dir+'/faces.pkl'
         for j, frame in prog_bar:
             j = j+1
             face_result = self.face_detector.faceDetec(frame)
@@ -71,8 +76,14 @@ class DataProcessor():
                         box = boxes[i]
                         x1, y1, x2, y2 = box
                         file_name = split_dir + '/{}.jpg'.format(j)
-                        cv2.imwrite(file_name, frame[int(y1):int(y2), int(x1):int(x2)])
+                        face = frame[int(y1):int(y2), int(x1):int(x2)]
+                        faces['{}'.format(j)]=face
+                        cv2.imwrite(file_name, face)
                         prog_bar.set_description('Extract Face Image：{}.jpg'.format(j))
+
+        #写入脸部文件“faces.bin",注意的是这个里面保存的是dict文件
+        #with open(face_file,'wb') as f:
+            #pickle.dump(faces,f)
 
     def __get_split_path(self, vfile, processed_data_root):
         vf = Path(vfile)
