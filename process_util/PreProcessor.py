@@ -31,7 +31,8 @@ class PreProcessor():
         asr_func = pipeline(task=Tasks.auto_speech_recognition,
                             model=self.model_id)
         print('Total process {} files'.format(len(videoFiles)))
-        for video in videoFiles:
+        prog_bar = tqdm(enumerate(videoFiles), total=len(videoFiles), leave=False)
+        for i,video in prog_bar:
             #看是否已经有时间戳，没有的话就做时间戳文件
             parentPath = Path(video).parent
             filename = Path(video).stem
@@ -63,6 +64,7 @@ class PreProcessor():
             st = round(start/1000)
             if st < movieEnd:
                 self.__genClipVideo(videoC,st,movieEnd,outputD)
+            prog_bar.set_description('Split video files {}/{}'.format(i,len(videoFiles)))
 
 
 
@@ -79,7 +81,7 @@ class PreProcessor():
         for video in tqdm(videos):
             outputD=self.__genOutputDir(input_dir,output_dir,video)
             i=0
-            videoC = VideoFileClip(str(video))
+            videoC = VideoFileClip(str(video),verbose=False)
             movieEnd = int(videoC.duration)
 
             #按秒数来分割视频，最后一段到结束
@@ -99,7 +101,7 @@ class PreProcessor():
                                                     startTime,
                                                     endTime)
         clipVideo = videoClip.subclip(startTime, endTime)
-        clipVideo.write_videofile(outputName)
+        clipVideo.write_videofile(outputName,logger=None)
 
     '''
         处理文件后的输出目录生成并返回目录名称
@@ -150,7 +152,7 @@ class PreProcessor():
         print('wavefile put in temp:{}'.format(temp_dir))
         wavfile = temp_dir+'/'+wname
         audio_clip = AudioFileClip(str(video))
-        audio_clip.write_audiofile(wavfile)
+        audio_clip.write_audiofile(wavfile,logger=None)
 
         rec_result = asr_func(audio_in=wavfile)
 

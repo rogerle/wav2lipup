@@ -39,7 +39,7 @@ train_config:
   img_size: 288
   fps: 25
 
-  batch_size: 4
+  batch_size: 16
   init_learning_rate: 0.0001
   epochs: 1000000000
   num_works: 8
@@ -49,8 +49,8 @@ train_config:
 
   #####################################sycnet parameters##########################################
   syncnet_wt: 0.03
-  syncnet_batch_size: 8
-  syncnet_learning_rate: 0.00001
+  syncnet_batch_size: 16
+  syncnet_learning_rate: 0.0001
   syncnet_checkpoint_interval: 1000
   syncnet_eval_interval: 1000
   #####################################Disc parameters##########################################

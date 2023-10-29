@@ -41,7 +41,7 @@ class DataProcessor():
     def __extract_audio(self, vfile, split_dir):
         audio_clip = AudioFileClip(str(vfile))
         audiofile = split_dir + '/audio.wav'
-        audio_clip.write_audiofile(audiofile)
+        audio_clip.write_audiofile(audiofile,logger=None)
 
         audio_meta_f = split_dir + '/audio_meta.info'
 
