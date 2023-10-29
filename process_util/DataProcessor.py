@@ -50,7 +50,6 @@ class DataProcessor():
         audio_meta = torchaudio.info(audiofile)
         with open(audio_meta_f, 'w') as f:
             f.write(str(audio_meta))
-        print('audio info {}'.format(audio_meta))
 
     """
         提取人脸图片放入数据处理文件
