@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from torch import optim
 from torch.utils.data import DataLoader
@@ -14,6 +15,19 @@ class TestSyncnetTrain(unittest.TestCase):
     def testGPUTrain(self):
         device='cuda'
         data_root='../data/test_data/pr_data'
+        train_txt = data_root + '/train.txt'
+        eval_txt = data_root + '/eval.txt'
+        Path(train_txt).write_text('')
+        Path(eval_txt).write_text('')
+        for line in Path.glob(Path(data_root), '*/*'):
+            if line.is_dir():
+                dirs = line.parts
+                input_line = str(dirs[-2] + '/' + dirs[-1])
+                with open(train_txt, 'a') as f:
+                    f.write(input_line + '\n')
+                with open(eval_txt, 'a') as f:
+                    f.write(input_line + '\n')
+
         param = ParamsUtil()
         train_dataset = SyncNetDataset(data_root, run_type='train', img_size=288)
         val_dataset = SyncNetDataset(data_root, run_type='eval', img_size=288)

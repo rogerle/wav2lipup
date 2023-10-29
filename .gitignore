@@ -197,3 +197,6 @@ cython_debug/
 /data/test_data/input/000001.wav
 /data/test_data/input/000002.json
 /data/test_data/input/000002.wav
+/data/test_data/pr_data/cctvm0000001/
+/data/test_data/pr_data/eval.txt
+/data/test_data/pr_data/train.txt
