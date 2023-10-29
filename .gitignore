@@ -200,3 +200,4 @@ cython_debug/
 /data/test_data/pr_data/cctvm0000001/
 /data/test_data/pr_data/eval.txt
 /data/test_data/pr_data/train.txt
+/data/test_data/output/
