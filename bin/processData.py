@@ -47,8 +47,10 @@ def process_data(inputdir, outputdir, device):
         if f.is_file():
             files.append(f)
     files.sort()
-    for i, fp in tqdm(enumerate(files)):
-        print('process the video file: {}'.format(fp))
+    total_files=len(files)
+    prog_bar = tqdm(enumerate(files), total=total_files, leave=False)
+    for i, fp in prog_bar:
+        prog_bar.set_description('Extract face frame:{}/{}'.format(i,total_files))
         dataProcessor.processVideoFile(str(fp), device=device, processed_data_root=outputdir)
 
 

@@ -88,7 +88,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
     with LogWriter(logdir="../logs/syncnet_train/train") as writer:
         while epoch < numepochs:
             running_loss = 0
-            prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = True)
+            prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = False)
             for step,(x,mel,y) in prog_bar:
                 model.train()
                 optimizer.zero_grad()

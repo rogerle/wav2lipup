@@ -15,10 +15,7 @@ class DataProcessor():
     '''
 
     def processVideoFile(self, vfile, **kwargs):
-        if kwargs['device'] == 'gpu':
-            vCap = cv2.VideoCapture(cv2.CAP_DSHOW + 0)
-        else:
-            vCap = cv2.VideoCapture()
+        vCap = cv2.VideoCapture()
 
         ok = vCap.open(vfile)
 
@@ -60,8 +57,9 @@ class DataProcessor():
     """
 
     def __extract_face_img(self, frames, split_dir):
-        for j, frame in enumerate(tqdm(frames)):
-            j += 1
+        prog_bar = tqdm(enumerate(frames), total=len(frames), leave=False)
+        for j, frame in prog_bar:
+            j = j+1
             face_result = self.face_detector.faceDetec(frame)
             scores = face_result['scores']
             boxes = face_result['boxes']
@@ -75,6 +73,7 @@ class DataProcessor():
                         x1, y1, x2, y2 = box
                         file_name = split_dir + '/{}.jpg'.format(j)
                         cv2.imwrite(file_name, frame[int(y1):int(y2), int(x1):int(x2)])
+                        prog_bar.set_description('Extract Face Image：{}.jpg'.format(j))
 
     def __get_split_path(self, vfile, processed_data_root):
         vf = Path(vfile)
