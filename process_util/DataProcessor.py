@@ -45,7 +45,7 @@ class DataProcessor():
         wavform, sr = torchaudio.load(audiofile)
         resample = torchaudio.transforms.Resample(sr, 16000)
         wavform = resample(wavform)
-        torchaudio.save(audiofile, wavform, samplerate=16000)
+        torchaudio.save(audiofile, wavform, sample_rate=16000)
 
         audio_meta = torchaudio.info(audiofile)
         with open(audio_meta_f, 'w') as f:
