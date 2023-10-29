@@ -48,9 +48,9 @@ train_config:
   save_optimizer_state: True
 
   #####################################sycnet parameters##########################################
-  syncnet_wt: 0.03
-  syncnet_batch_size: 16
-  syncnet_learning_rate: 0.0001
+  syncnet_wt: 0.0
+  syncnet_batch_size: 64
+  syncnet_learning_rate: 1e-4
   syncnet_checkpoint_interval: 1000
   syncnet_eval_interval: 1000
   #####################################Disc parameters##########################################
