@@ -51,8 +51,8 @@ train_config:
   syncnet_wt: 0.03
   syncnet_batch_size: 8
   syncnet_learning_rate: 0.00001
-  syncnet_checkpoint_interval: 10
-  syncnet_eval_interval: 10
+  syncnet_checkpoint_interval: 1000
+  syncnet_eval_interval: 1000
   #####################################Disc parameters##########################################
   disc_wt: 0.07
   disc_init_learning_rate: 0.0001
