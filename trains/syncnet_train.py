@@ -50,8 +50,9 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 
 
 def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
-    eval_steps = global_step
+    eval_steps = 1500
     losses = []
+    print('Evaluating for {} steps'.format(eval_steps))
     with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
         while 1:
             for vstep,(x,mel,y) in enumerate(val_dataloader):
@@ -73,7 +74,7 @@ def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
 
             averaged_loss = sum(losses)/len(losses)
             writer.add_scalar(tag='eval/loss', step=eval_steps, value=averaged_loss)
-            print(averaged_loss)
+            print('The evaluating loss:{}'.format(averaged_loss))
             return
 
 
