@@ -53,13 +53,8 @@ class FaceDataset(Dataset):
 
             g_window = self.__narray_window(g_window)
             y = np.concatenate([window, g_window], axis=0)
-            if torch.cuda.is_available() is True:
-                cuda = torch.device('cuda')
-                x = torch.cuda.FloatTensor(x)
-                y = torch.cuda.FloatTensor(y)
-            else:
-                x = torch.FloatTensor(x)
-                y = torch.FloatTensor(y)
+            x = torch.tensor(x,dtype=torch.float)
+            y = torch.tensor(y,dtype=torch.float)
 
             # 对音频进行mel图谱化，并进行对应。
             vid = self.dirlist[audio_index]
@@ -76,7 +71,8 @@ class FaceDataset(Dataset):
                                                                 f_max=hp.fmax,
                                                                 n_mels=hp.num_mels,
                                                                 normalized=hp.signal_normalization)
-                orig_mel = specgram(wavform).permute(2,1,0).numpy()
+                orig_mel = specgram(wavform)[0]
+                orig_mel = orig_mel.t().numpy()
             except Exception as e:
                 continue
 
@@ -90,12 +86,9 @@ class FaceDataset(Dataset):
             if indiv_mels is None:
                 continue
 
-            if torch.cuda.is_available() is True:
-                mel = torch.cuda.FloatTensor(np.transpose(mel,(2,1,0))).unsqueeze(0)
-                indiv_mels = torch.cuda.FloatTensor(indiv_mels).unsqueeze(1)
-            else:
-                mel = torch.FloatTensor(np.transpose(mel,(2,1,0))).unsqueeze(0)
-                indiv_mels = torch.FloatTensor(indiv_mels).unsqueeze(1)
+
+            mel = torch.tensor(np.transpose(mel,(1,0)),dtype=torch.float).unsqueeze(0)
+            indiv_mels = torch.tensor(indiv_mels,dtype=torch.float).unsqueeze(1)
 
             return x, y, mel,indiv_mels
 
@@ -195,7 +188,7 @@ class FaceDataset(Dataset):
             m = self.__crop_audio_window(spec,i - 2)
             if m.shape[0] != self.hp.syncnet_mel_step_size:
                 return None
-            mels.append(np.transpose(m,(2,1,0)))
+            mels.append(np.transpose(m,(1,0)))
         mels = np.asarray(mels)
 
         return mels

@@ -20,8 +20,8 @@ class TestFaceDataset(unittest.TestCase):
         for x,y,mel1,invid_mels in test_loader:
             print("matrix x's size:{}".format(x.size()))
             print("matrix y size:{}".format(y.size()))
-            print(mel1)
-            print(invid_mels)
+            print("matrix mel1's size:{}".format(mel1.size()))
+            print("matrix invid_mes's size:{}".format(invid_mels.size()))
 
 
         """wavform, sf = torchaudio.load('../data/test_data/pr_data/000001/000001_00000_00006/audio.wav')

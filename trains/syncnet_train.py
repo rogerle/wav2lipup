@@ -140,7 +140,7 @@ def main():
                                 num_workers=param.num_works)
 
     if args.gpunum > 0:
-        device = torch.device('cuda')
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     else:
         device = torch.device('cpu')
 

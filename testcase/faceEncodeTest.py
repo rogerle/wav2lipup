@@ -21,12 +21,10 @@ class FaceEncode(unittest.TestCase):
         fe = FaceCreator()
         # random_data = torch.randn([1,3,96,96])
         # output = fe.forward(random_data)
-        audios=torch.randn(5,1,80,16)
-        faces =torch.randn(5,6,288,288)
+        audios=torch.randn(1,5,1,80,16)
+        faces =torch.randn(1,6,5,288,288)
         summary(fe,input_data=(audios,faces))
 
-        print(torch.cuda.is_available())
-        print(torch.cuda.memory_summary(0,abbreviated=True))
 
         #img = output.detach().numpy()
         #plt.imshow(img,interpolation='none',cmap='Blues')
