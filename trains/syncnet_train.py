@@ -110,7 +110,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                 optimizer.step()
 
                 gloab_step=gloab_step+1
-                running_loss = loss.item()
+                running_loss += loss.item()
                 epoch_loss.append(running_loss)
                 if gloab_step % checkpoint_interval == 0:
                     save_checkpoint(model,optimizer,gloab_step,checkpoint_dir,epoch)
@@ -120,8 +120,8 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                         eval_model(val_dataloader,gloab_step,device,model,checkpoint_dir)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch,numepochs))
-                prog_bar.set_postfix(train_loss=running_loss,step=step + 1,gloab_step=gloab_step)
-                writer.add_scalar(tag='train/step_loss', step=gloab_step, value=running_loss)
+                prog_bar.set_postfix(train_loss=running_loss/(step+1),step=step + 1,gloab_step=gloab_step)
+                writer.add_scalar(tag='train/step_loss', step=gloab_step, value=running_loss/(step+1))
             writer.add_scalar(tag='train/epoch_loss', step=epoch, value=sum(epoch_loss)/len(epoch_loss))
             epoch +=1
 
