@@ -16,10 +16,10 @@ from visualdl import LogWriter
 
 param = ParamsUtil()
 
-def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer):
+def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer,gpunum):
 
     print("load checkpoint from: {}".format(checkpoint_path))
-    if param.gpunum > 0:
+    if gpunum > 0:
         checkpoint = torch.load(checkpoint_path)
     else:
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
@@ -50,8 +50,9 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 
 
 def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
-    eval_steps = global_step
+    eval_steps = 1500
     losses = []
+    print('Evaluating for {} steps'.format(eval_steps))
     with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
         while 1:
             for vstep,(x,mel,y) in enumerate(val_dataloader):
@@ -73,7 +74,7 @@ def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
 
             averaged_loss = sum(losses)/len(losses)
             writer.add_scalar(tag='eval/loss', step=eval_steps, value=averaged_loss)
-            print(averaged_loss)
+            print('The evaluating loss:{}'.format(averaged_loss))
             return
 
 
@@ -89,6 +90,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
         while epoch < numepochs:
             running_loss = 0
             prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = False)
+            epoch_loss=[]
             for step,(x,mel,y) in prog_bar:
                 model.train()
                 optimizer.zero_grad()
@@ -109,7 +111,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
 
                 gloab_step=gloab_step+1
                 running_loss = loss.item()
-
+                epoch_loss.append(running_loss)
                 if gloab_step % checkpoint_interval == 0:
                     save_checkpoint(model,optimizer,gloab_step,checkpoint_dir,epoch)
 
@@ -118,9 +120,9 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                         eval_model(val_dataloader,gloab_step,device,model,checkpoint_dir)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch,numepochs))
-                prog_bar.set_postfix(train_loss=running_loss/(step + 1),gloab_step=gloab_step)
-                writer.add_scalar(tag='train/running_loss', step=gloab_step, value=running_loss)
-                writer.add_scalar(tag='train/loss', step=gloab_step, value=running_loss / (step + 1))
+                prog_bar.set_postfix(train_loss=running_loss,step=step + 1,gloab_step=gloab_step)
+                writer.add_scalar(tag='train/step_loss', step=gloab_step, value=running_loss)
+            writer.add_scalar(tag='train/epoch_loss', step=epoch, value=sum(epoch_loss)/len(epoch_loss))
             epoch +=1
 
 def main():
@@ -155,7 +157,7 @@ def main():
     start_epoch =0
 
     if checkpoint_path is not None:
-        model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
+        model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False,gpunum=args.gpunum)
 
     torch.multiprocessing.set_start_method('spawn')
     
