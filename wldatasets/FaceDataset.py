@@ -45,16 +45,6 @@ class FaceDataset(Dataset):
             if window is None or g_window is None:
                 continue
 
-            # 对window进行范围缩小到0-1之间的array的处理
-            window = self.__narray_window(window)
-            x = window.copy()
-            # 把图片的下半部分抹去
-            window[:, :, window.shape[2] // 2:] = 0.
-
-            g_window = self.__narray_window(g_window)
-            y = np.concatenate([window, g_window], axis=0)
-            x = torch.tensor(x,dtype=torch.float)
-            y = torch.tensor(y,dtype=torch.float)
 
             # 对音频进行mel图谱化，并进行对应。
             vid = self.dirlist[audio_index]
@@ -85,12 +75,22 @@ class FaceDataset(Dataset):
 
             if indiv_mels is None:
                 continue
+            # 对window进行范围缩小到0-1之间的array的处理
+            window = self.__narray_window(window)
+            y = window.copy()
+            # 把图片的下半部分抹去
+            window[:, :, window.shape[2] // 2:] = 0.
+
+            g_window = self.__narray_window(g_window)
+            x = np.concatenate([window, g_window], axis=0)
 
 
+            x = torch.tensor(x,dtype=torch.float)
+            y = torch.tensor(y,dtype=torch.float)
             mel = torch.tensor(np.transpose(mel,(1,0)),dtype=torch.float).unsqueeze(0)
             indiv_mels = torch.tensor(indiv_mels,dtype=torch.float).unsqueeze(1)
 
-            return x, y, mel,indiv_mels
+            return x, indiv_mels, mel, y
 
     def __len__(self):
         return len(self.dirlist)

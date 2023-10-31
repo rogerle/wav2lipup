@@ -24,8 +24,20 @@ class FaceEncode(unittest.TestCase):
         audios=torch.randn(1,5,1,80,16)
         faces =torch.randn(1,6,5,288,288)
         summary(fe,input_data=(audios,faces))
+        sData = FaceDataset('../data/test_data/pr_data', img_size=288)
+        test_loader = DataLoader(sData)
+        for i,(x,y,mel1,invid_mels) in enumerate(test_loader):
+            gen_img = fe(invid_mels,x)
+            print('Face generator data shape {} , {}'.format(gen_img.shape,type(gen_img)))
+            cv2.imwrite('../data/test_data/face{}.jpg'.format(i),gen_img.detach().numpy()[0][0][0]*255)
+            plt.imshow(gen_img.detach().numpy()[0][0][0])
+            plt.show()
 
-
+            disc_tmp = Discriminator()
+            pred_real = disc_tmp(y)
+            pred_fake = disc_tmp(gen_img)
+            print("disc real and fake image shape:{} {}".format(pred_real.shape,pred_fake.shape))
         #img = output.detach().numpy()
         #plt.imshow(img,interpolation='none',cmap='Blues')
+
 

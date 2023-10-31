@@ -16,10 +16,10 @@ from visualdl import LogWriter
 
 param = ParamsUtil()
 
-def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer,gpunum):
+def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
 
     print("load checkpoint from: {}".format(checkpoint_path))
-    if gpunum > 0:
+    if torch.cuda.is_available():
         checkpoint = torch.load(checkpoint_path)
     else:
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
@@ -73,7 +73,7 @@ def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
                 if vstep > eval_steps: break
 
             averaged_loss = sum(losses)/len(losses)
-            writer.add_scalar(tag='eval/loss', step=eval_steps, value=averaged_loss)
+            writer.add_scalar(tag='eval/loss', step=global_step, value=averaged_loss)
             print('The evaluating loss:{}'.format(averaged_loss))
             return
 
@@ -92,7 +92,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
             prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = False)
             epoch_loss=[]
             for step,(x,mel,y) in prog_bar:
-                model.train()
+                model.train(),
                 optimizer.zero_grad()
 
                 #transform data to cuda
@@ -138,7 +138,7 @@ def main():
 
     train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
                                   num_workers=param.num_works)
-    val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
+    val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size,
                                 num_workers=param.num_works)
 
     if args.gpunum > 0:
@@ -157,7 +157,7 @@ def main():
     start_epoch =0
 
     if checkpoint_path is not None:
-        model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False,gpunum=args.gpunum)
+        model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
 
     torch.multiprocessing.set_start_method('spawn')
     
@@ -167,7 +167,7 @@ def main():
 def parse_args():
     # parse args and config
     parser = argparse.ArgumentParser(
-        description="train the syncnet model for wav2lip")
+        description="train the sync_net model for wav2lip")
     parser.add_argument("--data_root", help='Root folder of the preprocessed dataset', required=True)
     parser.add_argument("--checkpoint_dir", help='Save checkpoints to this directory', required=True, type=str)
     parser.add_argument("--checkpoint_path", help='Resume from this checkpoint', default=None, type=str)
