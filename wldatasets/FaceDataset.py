@@ -38,7 +38,7 @@ class FaceDataset(Dataset):
             audio_index = idx
             image_names = self.__get_imgs(idx)
             hp = self.hp
-            if len(image_names) <=3 * self.hp.syncnet_T:
+            if len(image_names) <=3 * hp.syncnet_T:
                 continue
 
             window, g_window, image_name, g_image_name = self.__get_gan_window(image_names)
@@ -68,7 +68,7 @@ class FaceDataset(Dataset):
 
             mel = self.__crop_audio_window(orig_mel.copy(),image_name)
 
-            if mel.shape[0] != self.hp.syncnet_mel_step_size:
+            if mel.shape[0] != hp.syncnet_mel_step_size:
                 continue
 
             indiv_mels = self.__getsegmented_mels(orig_mel.copy(), image_name)

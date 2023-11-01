@@ -12,7 +12,6 @@ from process_util.ParamsUtil import ParamsUtil
 
 
 class SyncNetDataset(Dataset):
-    hp = ParamsUtil()
     def __init__(self, data_dir,
                  run_type: str = 'train',
                  **kwargs):
@@ -20,6 +19,7 @@ class SyncNetDataset(Dataset):
         self.run_type = run_type
         self.dirlist = self.__get_split_video_list()
         self.img_size = kwargs['img_size']
+        self.hp = ParamsUtil()
 
     def __getitem__(self, idx):
         while 1:
@@ -27,7 +27,7 @@ class SyncNetDataset(Dataset):
             audio_index = idx
             image_names = self.__get_imgs(idx)
             hp = self.hp
-            if len(image_names) <= 3 * self.hp.syncnet_T:
+            if len(image_names) <= 3 * hp.syncnet_T:
                 continue
 
             img_name = random.choice(image_names)
@@ -91,7 +91,7 @@ class SyncNetDataset(Dataset):
 
             mel = self.__crop_audio_window(orig_mel.copy(), img_name)
 
-            if mel.shape[0] != self.hp.syncnet_mel_step_size:
+            if mel.shape[0] != hp.syncnet_mel_step_size:
                 continue
 
             # H x W x 3 * T

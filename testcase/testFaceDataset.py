@@ -14,7 +14,6 @@ from process_util.ParamsUtil import ParamsUtil
 class TestFaceDataset(unittest.TestCase):
 
     def test_getItem(self):
-        hp = ParamsUtil()
         sData = FaceDataset('../data/test_data/pr_data', img_size=288)
         test_loader = DataLoader(sData)
         for x,y,mel1,invid_mels in test_loader:
