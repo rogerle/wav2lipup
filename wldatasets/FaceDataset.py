@@ -12,7 +12,7 @@ from process_util.ParamsUtil import ParamsUtil
 
 
 class FaceDataset(Dataset):
-
+    hp = ParamsUtil()
     def __init__(self, data_dir,
                  run_type: str = 'train',
                  **kwargs):
@@ -24,7 +24,6 @@ class FaceDataset(Dataset):
         self.type = run_type
         self.img_size = kwargs['img_size']
         self.dirlist = self.__get_split_video_list()
-        self.hp = ParamsUtil()
 
     def __getitem__(self, index):
         """

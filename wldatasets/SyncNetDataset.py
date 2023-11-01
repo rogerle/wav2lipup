@@ -12,6 +12,7 @@ from process_util.ParamsUtil import ParamsUtil
 
 
 class SyncNetDataset(Dataset):
+    hp = ParamsUtil()
     def __init__(self, data_dir,
                  run_type: str = 'train',
                  **kwargs):
@@ -19,7 +20,6 @@ class SyncNetDataset(Dataset):
         self.run_type = run_type
         self.dirlist = self.__get_split_video_list()
         self.img_size = kwargs['img_size']
-        self.hp = ParamsUtil()
 
     def __getitem__(self, idx):
         while 1:
