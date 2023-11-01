@@ -120,8 +120,7 @@ def eval_model(test_data_loader, syncnet_wt, device, model, disc):
 
             l1loss = recon_loss(g, gt)
 
-            loss = syncnet_wt * sync_loss + param.disc_wt * perceptual_loss + \
-                   (1. - param.syncnet_wt - param.disc_wt) * l1loss
+            loss = syncnet_wt * sync_loss + param.disc_wt * perceptual_loss + (1. - param.syncnet_wt - param.disc_wt) * l1loss
 
             running_l1_loss.append(l1loss.item())
             running_sync_loss.append(sync_loss.item())
