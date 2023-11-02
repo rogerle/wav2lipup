@@ -42,7 +42,7 @@ train_config:
   batch_size: 16
   init_learning_rate: 0.0001
   epochs: 1000000000
-  num_works: 8
+  num_works: 1
   checkpoint_interval: 1000
   eval_interval: 1000
   save_optimizer_state: True
@@ -55,6 +55,6 @@ train_config:
   syncnet_eval_interval: 3000
   #####################################Disc parameters##########################################
   disc_wt: 0.07
-  disc_init_learning_rate: 0.0001
+  disc_initial_learning_rate: 0.0001
 
 

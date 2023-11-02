@@ -258,10 +258,10 @@ def main():
     test_dataset = FaceDataset(args.data_root, run_type='eval', img_size=param.img_size)
 
     train_data_loader = DataLoader(train_dataset, batch_size=param.batch_size, shuffle=True,
-                                   num_workers=param.num_workers)
+                                   num_workers=param.num_works)
 
     test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
-                                  num_workers=param.num_workers)
+                                  num_workers=param.num_works)
 
     #判断是否使用gpu
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -293,6 +293,7 @@ def main():
     # 装在sync_net
     syncnet, step, epoch = load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
 
+    torch.multiprocessing.set_start_method('spawn')
     train(device, model, disc, syncnet, train_data_loader, test_data_loader, optimizer, disc_optimizer,
           checkpoint_dir=checkpoint_dir, start_step=start_step,start_epoch=start_epoch)
 
