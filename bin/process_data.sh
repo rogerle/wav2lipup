@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEMP=/tmp
+export TEMP=/tmp
 stage=0
 stop_stage=100
 export IMAGEIO_FFMPEG_EXE=/usr/local/bin/ffmpeg
