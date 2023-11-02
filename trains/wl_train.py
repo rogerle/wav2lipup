@@ -314,7 +314,7 @@ def parse_args():
                         type=str)
     parser.add_argument('--syncnet_checkpoint_path', help='Load he pre-trained Expert discriminator', required=True,
                         type=str)
-    parser.add_argument('--checkpoint_path', help='Load he pre-trained ', required=True,
+    parser.add_argument('--checkpoint_path', help='Load he pre-trained ', required=None,
                         type=str)
     parser.add_argument('--checkpoint', help='Resume generator from this checkpoint', default=None, type=str)
     parser.add_argument('--disc_checkpoint_path', help='Resume qulity disc from this checkpoint', default=None,
