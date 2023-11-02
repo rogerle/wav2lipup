@@ -50,10 +50,12 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 
 
 def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
-    eval_steps = 1500
+    eval_steps = 1400
     losses = []
+    acc = 0
+    acc_steps=0
     print('Evaluating for {} steps'.format(eval_steps))
-    with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
+    with LogWriter(logdir="../logs/syncnet_train/train") as writer:
         while 1:
             for vstep,(x,mel,y) in enumerate(val_dataloader):
                 model.eval()
@@ -69,11 +71,18 @@ def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
                 loss = logloss(d.unsqueeze(1),y)
 
                 losses.append(loss.item())
-
+                av_sim = nn.functional.cosine_similarity(a, v)
+                for i in range(a.size(0)):
+                    pred_label = 1 if av_sim[i] > 0.5 else 0
+                    if pred_label == y:
+                        acc += 1
+                acc_steps +=1
                 if vstep > eval_steps: break
 
             averaged_loss = sum(losses)/len(losses)
+            averaged_acc = acc/acc_steps
             writer.add_scalar(tag='eval/loss', step=global_step, value=averaged_loss)
+            writer.add_scalar(tag='eval/acc', step=global_step, value=averaged_acc)
             print('The evaluating loss:{}'.format(averaged_loss))
             return
 
