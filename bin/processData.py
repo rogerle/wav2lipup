@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 from process_util.DataProcessor import DataProcessor
 from process_util.PreProcessor import PreProcessor
-
-
+import sys
+sys.path.append(r"../")
 def orignal_process(inputdir):
     dirs = []
     root = Path(inputdir)
