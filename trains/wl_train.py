@@ -156,6 +156,7 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
     numepochs = param.epochs
     checkpoint_interval = param.checkpoint_interval
     syncnet_wt = param.syncnet_wt
+    disc_wt = param.disc_wt
     eval_interval = param.eval_interval
 
     with LogWriter(logdir="../logs/wav2lip/train") as writer:
@@ -178,12 +179,12 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
 
                 g = model(indiv_mels, x)
 
-                if param.syncnet_wt > 0.:
+                if syncnet_wt > 0.:
                     sync_loss = get_sync_loss(sync_net, device, mel, g)
                 else:
                     sync_loss = 0.
 
-                if param.disc_wt > 0.:
+                if disc_wt > 0.:
                     perceptual_loss = disc.perceptual_forward(g)
                 else:
                     perceptual_loss = 0.
@@ -218,12 +219,12 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
                 global_step += 1
 
                 running_l1_loss += l1loss.item()
-                if param.syncnet_wt > 0.:
+                if syncnet_wt > 0.:
                     running_sync_loss += sync_loss.item()
                 else:
                     running_sync_loss += 0.
 
-                if param.disc_wt > 0.:
+                if disc_wt > 0.:
                     running_perceptual_loss += perceptual_loss.item()
                 else:
                     running_perceptual_loss += 0.
@@ -233,7 +234,7 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
                         model, optimizer, global_step, checkpoint_dir, epoch)
                     save_checkpoint(disc, disc_optimizer, global_step, checkpoint_dir, epoch, prefix='disc_')
 
-                if global_step % param.eval_interval == 0:
+                if global_step % eval_interval == 0:
                     with torch.no_grad():
                         average_sync_loss = eval_model(test_data_loader, syncnet_wt, device, model, disc,sync_net,global_step)
                         writer.add_scalar(tag='eval/loss', step=global_step, value=average_sync_loss)
