@@ -161,7 +161,7 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
         while epoch < numepochs:
             running_sync_loss, running_l1_loss, disc_loss, running_perceptual_loss = 0., 0., 0., 0.
             running_disc_real_loss, running_disc_fake_loss = 0., 0.
-            prog_bar = tqdm(enumerate(train_data_loader), total=len(train_data_loader), leave=True)
+            prog_bar = tqdm(enumerate(train_data_loader), total=len(train_data_loader), leave=False)
             for step, (x, indiv_mels, mel, gt) in prog_bar:
                 disc.train()
                 model.train()
