@@ -10,27 +10,33 @@ class SyncNetModel(nn.Module):
         super(SyncNetModel, self).__init__()
 
         self.face_encoder = nn.Sequential(
-            BaseConv2D(15, 32, (7, 7), 1, 3),
-            BaseConv2D(32, 64, kernel_size=5, stride=(1, 2), padding=1),
-            BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
-            BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
-
-            BaseConv2D(64, 128, kernel_size=5, stride=4, padding=1),
+            BaseConv2D(15, 32, (7, 7), 1, 3), #144 288
+            # 144 144
+            BaseConv2D(32, 64, kernel_size=5, stride=(1, 2), padding=2),
+            BaseConv2D(64, 64, kernel_size=5, stride=1, padding=2, residual=True),
+            BaseConv2D(64, 64, kernel_size=5, stride=1, padding=2, residual=True),
+            # 72 72
+            BaseConv2D(64, 128, kernel_size=5, stride=2, padding=2),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
-
-            BaseConv2D(128, 256, kernel_size=3, stride=2, padding=1),
+            # 24 24
+            BaseConv2D(128, 256, kernel_size=5, stride=3, padding=2),
             BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
-
+            #12  12
             BaseConv2D(256, 512, kernel_size=3, stride=2, padding=1),
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
+            # 6  6
+            BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
-
-            BaseConv2D(512, 512, kernel_size=3, stride=3, padding=1),
+            # 3  3
+            BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),
+            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
+            # 1 1
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0),
-            BaseConv2D(512, 512, kernel_size=1, stride=1, padding=0)
+            BaseConv2D(512, 512, kernel_size=1, stride=1, padding=0),
+
         )
 
         self.audio_encoder = nn.Sequential(
