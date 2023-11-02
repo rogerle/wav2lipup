@@ -40,12 +40,27 @@ class FaceDataset(Dataset):
             if len(image_names) <=3 * hp.syncnet_T:
                 continue
 
-            window, g_window, image_name, g_image_name = self.__get_gan_window(image_names)
-            if window is None or g_window is None:
+
+            img_name = random.choice(image_names)
+            wrong_img_name = random.choice(image_names)
+            while wrong_img_name == img_name:
+                wrong_img_name = random.choice(image_names)
+
+            window_fnames = self.__get_window(img_name)
+            wrong_window_fnames = self.__get_window(wrong_img_name)
+            if window_fnames is None or wrong_window_fnames is None:
+                continue
+
+            window = self.__read_window(window_fnames)
+            if window is None:
+                continue
+
+            wrong_window = self.__read_window(wrong_window_fnames)
+            if wrong_window is None:
                 continue
 
 
-            # 对音频进行mel图谱化，并进行对应。
+           # 对音频进行mel图谱化，并进行对应。
             vid = self.dirlist[audio_index]
 
             wavfile = self.data_dir + '/' + vid + '/audio.wav'
@@ -65,12 +80,12 @@ class FaceDataset(Dataset):
             except Exception as e:
                 continue
 
-            mel = self.__crop_audio_window(orig_mel.copy(),image_name)
+            mel = self.__crop_audio_window(orig_mel.copy(),img_name)
 
             if mel.shape[0] != hp.syncnet_mel_step_size:
                 continue
 
-            indiv_mels = self.__getsegmented_mels(orig_mel.copy(), image_name)
+            indiv_mels = self.__getsegmented_mels(orig_mel.copy(), img_name)
 
             if indiv_mels is None:
                 continue
@@ -80,8 +95,8 @@ class FaceDataset(Dataset):
             # 把图片的下半部分抹去
             window[:, :, window.shape[2] // 2:] = 0.
 
-            g_window = self.__narray_window(g_window)
-            x = np.concatenate([window, g_window], axis=0)
+            wrong_window = self.__narray_window(wrong_window)
+            x = np.concatenate([window, wrong_window], axis=0)
 
 
             x = torch.tensor(x,dtype=torch.float)
@@ -114,22 +129,6 @@ class FaceDataset(Dataset):
         for img in Path().joinpath(self.data_dir, vid).glob('**/*.jpg'):
             img_names.append(img)
         return img_names
-
-    # 随机找出对抗的两张脸的图，一个是正确的，一个是错误的
-    def __get_gan_window(self, image_names):
-        img_name = random.choice(image_names)
-        g_img_name = random.choice(image_names)
-        while img_name == g_img_name:
-            g_img_name = random.choice(image_names)
-
-        window_fnames = self.__get_window(img_name)
-        g_window_fnames = self.__get_window(g_img_name)
-        if window_fnames is None or g_window_fnames is None:
-            return None, None,img_name,g_img_name
-        window = self.__read_window(window_fnames)
-        g_window = self.__read_window(g_window_fnames)
-
-        return window, g_window,img_name,g_img_name
 
     def __get_window(self, img_name):
         start_id = int(Path(img_name).stem)
