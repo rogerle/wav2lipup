@@ -8,6 +8,7 @@
 
 
 """
+import os
 import argparse
 from pathlib import Path, PurePath
 
@@ -15,21 +16,33 @@ from tqdm import tqdm
 
 from process_util.DataProcessor import DataProcessor
 from process_util.PreProcessor import PreProcessor
+from sklearn.model_selection import train_test_split
+
 
 def orignal_process(inputdir):
     dirs = []
     root = Path(inputdir)
     # 把目录下的子目录都拿出来
-"""    for dir in Path.rglob(root, '*'):
+    for dir in Path.rglob(root, '*'):
         if dir.is_dir():
             dirs.append(str(dir))
     # 重命名所有文件，把文件转换成6位数字的文件名，格式为000000.MP4
+    temp_dir = inputdir + '/temp'
+    Path(temp_dir).mkdir(parents=True,exist_ok=True)
     for i, dir in tqdm(enumerate(dirs), desc='process the original datasets:', total=len(dirs), unit='video'):
         j = 0
+        files=[]
         for f in Path.glob(Path(dir), '**/*.mp4'):
             j = j + 1
-            newfilename = str(f.parent) + '/{0:06}.mp4'.format(j)
-            Path.rename(Path(str(f)), Path(newfilename))"""
+            newfilename = temp_dir + '/{0:04}.mp4'.format(j)
+            files.append(newfilename)
+            Path.rename(Path(str(f)), Path(newfilename))
+        for nf in files:
+            fname=dir +'/' + Path(nf).name
+            Path.rename(Path(nf),Path(fname))
+
+    Path(temp_dir).rmdir()
+
 
 
 def preProcess(inputdir, outputdir):
@@ -58,6 +71,7 @@ def train_file_write(inputdir):
     eval_txt = inputdir + '/eval.txt'
     Path(train_txt).write_text('')
     Path(eval_txt).write_text('')
+    result_list=[]
     for line in Path.glob(Path(inputdir), '*/*'):
         if line.is_dir():
             dirs = line.parts

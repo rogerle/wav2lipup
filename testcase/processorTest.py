@@ -37,7 +37,7 @@ class TestProcessor(unittest.TestCase):
 
         processor.videosPreProcessByTime(input_dir=self.__input_dir__,
                                          output_dir=self.__outputT_dir__,
-                                         s_time=5,
+                                         s_time=3,
                                          ext='mp4')
         outputPath1 = Path('../data/test_data/outputT/000001/000001')
         outputPath2 = Path('../data/test_data/outputT/000002/000001')

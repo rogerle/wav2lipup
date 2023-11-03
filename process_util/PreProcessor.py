@@ -78,7 +78,8 @@ class PreProcessor():
         ext = kwargs.get('ext')
 
         videos = self.__getProcessFils(input_dir,ext)
-        for video in tqdm(videos):
+        prog_bar = tqdm(enumerate(videos), total=len(videos), leave=False)
+        for j,video in prog_bar:
             outputD=self.__genOutputDir(input_dir,output_dir,video)
             i=0
             videoC = VideoFileClip(str(video),verbose=False)
@@ -92,6 +93,7 @@ class PreProcessor():
                     endTime = movieEnd
                 self.__genClipVideo(videoC,startTime,endTime,outputD)
                 i=i+S_TIME
+            prog_bar.set_description('Split video files {}/{}'.format(i, len(videos)))
 
     '''
         切割视频文件写入到指定目录
