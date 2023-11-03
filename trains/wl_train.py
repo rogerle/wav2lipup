@@ -242,12 +242,15 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
                             syncnet_wt = 0.03
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, numepochs))
-                prog_bar.set_postfix(L1=running_l1_loss / (step + 1), Sync=running_sync_loss / (step + 1),
+                prog_bar.set_postfix(Step=global_step,L1=running_l1_loss / (step + 1), Sync=running_sync_loss / (step + 1),
                                      Percep=running_perceptual_loss / (step + 1),
                                      Fake=running_disc_fake_loss / (step + 1), Real=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/L1_loss', step=global_step, value=running_l1_loss / (step + 1))
                 writer.add_scalar(tag='train/Sync_loss', step=global_step, value=running_sync_loss / (step + 1))
                 writer.add_scalar(tag='train/Percep_loss', step=global_step, value=running_perceptual_loss / (step + 1))
+                writer.add_scalar(tag='train/Real_loss', step=global_step, value=running_disc_real_loss / (step + 1))
+                writer.add_scalar(tag='train/Fake_loss', step=global_step, value=running_disc_fake_loss / (step + 1))
+
 
             epoch += 1
 
