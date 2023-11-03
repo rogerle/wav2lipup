@@ -20,7 +20,7 @@ class W2LtrainTest(unittest.TestCase):
         Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
         disc_checkpoint_path = None
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        syncnet_checkpoint_path='../data/syncnet_checkpoint/sync_checkpoint_step000161000.pth'
+        syncnet_checkpoint_path='../data/syncnet_checkpoint/sync_checkpoint_step000033000.pth'
 
         train_dataset = FaceDataset(data_root, run_type='train', img_size=param.img_size)
         test_dataset = FaceDataset(data_root, run_type='eval', img_size=param.img_size)

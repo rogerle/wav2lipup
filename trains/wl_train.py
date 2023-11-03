@@ -74,7 +74,7 @@ def save_sample_images(x, g, gt, global_step, checkpoint_dir):
         for batch_idx, c in enumerate(collage):
             for t in range(len(c)):
                 cv2.imwrite('{}/{}_{}.jpg'.format(folder, batch_idx, t), c[t])
-                writer.add_image('sample', c[t], step=global_step)
+                writer.add_image('sample', c[t], step=global_step,dataformats='NHWC')
 
 
 def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, prefix=''):
