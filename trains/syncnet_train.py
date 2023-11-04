@@ -74,6 +74,7 @@ def eval_model(val_dataloader, global_step,device, model, checkpoint_dir):
                 av_sim = nn.functional.cosine_similarity(a, v)
                 for i in range(a.size(0)):
                     pred_label = torch.ones(1).float() if av_sim[i] > 0.5 else torch.zeros(1).float()
+                    pred_label.to(device)
                     if pred_label == y:
                         acc += 1
                 acc_steps +=1
