@@ -60,10 +60,8 @@ class PreProcessor():
                         endTime = movieEnd
                     self.__genClipVideo(videoC,startTime,endTime,outputD)
                     start = tmpEnd
-            #把最后结尾的小段截出来
-            st = round(start/1000)
-            if st < movieEnd:
-                self.__genClipVideo(videoC,st,movieEnd,outputD)
+            #最后结尾的小段截出来
+
             prog_bar.set_description('Split video files {}/{}'.format(i,len(videoFiles)))
 
 

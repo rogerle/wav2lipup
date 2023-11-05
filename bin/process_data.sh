@@ -16,6 +16,7 @@ fi
 
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
    python processData.py --data_root=../data \
+                         --preprocess_type=ASR \
                          --process_step=1 \
                          --gpu_num=1 || exit -1
 fi
