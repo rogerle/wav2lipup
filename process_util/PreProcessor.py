@@ -80,7 +80,7 @@ class PreProcessor():
         for j,video in prog_bar:
             outputD=self.__genOutputDir(input_dir,output_dir,video)
             i=0
-            videoC = VideoFileClip(str(video),verbose=False)
+            videoC = VideoFileClip(str(video))
             movieEnd = int(videoC.duration)
 
             #按秒数来分割视频，最后一段到结束
@@ -101,7 +101,7 @@ class PreProcessor():
                                                     startTime,
                                                     endTime)
         clipVideo = videoClip.subclip(startTime, endTime)
-        clipVideo.write_videofile(outputName,logger=None)
+        clipVideo.write_videofile(outputName)
 
     '''
         处理文件后的输出目录生成并返回目录名称
