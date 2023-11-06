@@ -81,10 +81,16 @@ def train_file_write(inputdir):
         if line.is_dir():
             dirs = line.parts
             input_line = str(dirs[-2] + '/' + dirs[-1])
-            with open(train_txt, 'a') as f:
-                f.write(input_line + '\n')
-            with open(eval_txt, 'a') as f:
-                f.write(input_line + '\n')
+            result_list.append(input_line)
+    if len(result_list)<14:
+        test_result=eval_result=train_result=result_list
+    else:
+        train_result,test_result=train_test_split(result_list,test_size=0.15,random_state=42)
+        test_result,eval_result=train_test_split(test_result,test_size=0.5,random_state=42)
+
+    for file_name,data_set in zip(("train.txt","test.txt","eval.txt"),(train_result,test_result,eval_result)):
+        with open(inputdir+'/'+file_name,'w',encoding='utf-8') as fi:
+            fi.write("\n".join(data_set))
 
 
 def main():
