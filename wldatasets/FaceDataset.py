@@ -70,7 +70,6 @@ class FaceDataset(Dataset):
                                                                 n_fft=hp.n_fft,
                                                                 hop_length=hp.hop_size,
                                                                 win_length=hp.win_size,
-                                                                power=1,
                                                                 f_min=hp.fmin,
                                                                 f_max=hp.fmax,
                                                                 n_mels=hp.num_mels,

@@ -83,7 +83,8 @@ class SyncNetDataset(Dataset):
                                                                 win_length=hp.win_size,
                                                                 f_min=hp.fmin,
                                                                 f_max=hp.fmax,
-                                                                n_mels=hp.num_mels)
+                                                                n_mels=hp.num_mels,
+                                                                normalized=hp.signal_normalizatio)
                 orig_mel = specgram(wavform)[0]
                 orig_mel = orig_mel.t().numpy()
             except Exception as e:
