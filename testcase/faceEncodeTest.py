@@ -29,8 +29,7 @@ class FaceEncode(unittest.TestCase):
         for i,(x, indiv_mels, mel, gt) in enumerate(test_loader):
             gen_img = fe(indiv_mels,x)
             print('Face generator data shape {} , {}'.format(gen_img.shape,type(gen_img)))
-            cv2.imwrite('../data/test_data/face{}.jpg'.format(i),gen_img.detach().numpy()[0][0][0]*255)
-            plt.imshow(gen_img.detach().numpy()[0][0][0])
+            plt.imshow(gen_img.detach()[0][0][0])
             plt.show()
 
             disc_tmp = Discriminator()

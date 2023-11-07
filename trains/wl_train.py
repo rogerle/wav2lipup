@@ -73,8 +73,8 @@ def save_sample_images(x, g, gt, global_step, checkpoint_dir):
         collage = np.concatenate((refs, inps, g, gt), axis=-2)
         for batch_idx, c in enumerate(collage):
             for t in range(len(c)):
-                cv2.imwrite('{}/{}_{}.jpg'.format(folder, batch_idx, t), c[t])
-                writer.add_image('sample', c[t], step=global_step,dataformats='HWC')
+                cv2.imwrite('{}/{}_{}.jpg'.format(folder, batch_idx, t), c[t]/255.)
+                writer.add_image('sample', c[t]/255., step=global_step,dataformats='HWC')
 
 
 def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, prefix=''):

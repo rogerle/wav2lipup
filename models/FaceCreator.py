@@ -80,15 +80,15 @@ class FaceCreator(nn.Module):
                           BaseConv2D(384, 384, 3, 1, 1, residual=True),
                           BaseConv2D(384, 384, 3, 1, 1, residual=True)), # 24 24
 
-            nn.Sequential(BaseTranspose(512, 256, 5, 3, 1, 0),
+            nn.Sequential(BaseTranspose(512, 256, 5, 3, 2, 2),
                           BaseConv2D(256, 256, 3, 1, 1, residual=True),
                           BaseConv2D(256, 256, 3, 1, 1, residual=True)), #72 72
 
-            nn.Sequential(BaseTranspose(320, 128, 4, 2, 1, 0),
+            nn.Sequential(BaseTranspose(320, 128, 5, 2, 2, 1),
                           BaseConv2D(128, 128, 3, 1, 1, residual=True),
                           BaseConv2D(128, 128, 3, 1, 1, residual=True)), #144 144
 
-            nn.Sequential(BaseTranspose(160, 64, 4, 2, 1, 0),
+            nn.Sequential(BaseTranspose(160, 64, 5, 2, 2, 1),
                           BaseConv2D(64, 64, 3, 1, 1, residual=True),
                           BaseConv2D(64, 64, 3, 1, 1, residual=True)),# 288 288
 

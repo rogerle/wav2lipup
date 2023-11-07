@@ -7,7 +7,7 @@ class BaseTranspose(nn.Module):
                             nn.ConvTranspose2d(cin, cout, kernel_size, stride, padding, output_padding),
                             nn.BatchNorm2d(cout)
                             )
-        self.act = nn.ReLU()
+        self.act = nn.PReLU()
 
     def forward(self, x):
         out = self.conv_block(x)
