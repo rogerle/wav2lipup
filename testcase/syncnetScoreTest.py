@@ -3,7 +3,7 @@ from process_util.SyncnetScore import SyncnetScore
 
 class SyncnetScoreTest(unittest.TestCase):
     def testscore(self):
-        syncnet_score=SyncnetScore('../data',8,'../data/syncnet_checkpoint/sync_checkpoint_step000028000.pth')
+        syncnet_score=SyncnetScore('../data/processed_data',8,'../data/syncnet_checkpoint/sync_checkpoint_step000028000.pth')
         syncnet_score.score_video()
 
 
