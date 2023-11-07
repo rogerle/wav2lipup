@@ -68,13 +68,6 @@ class SyncNetDataset(Dataset):
             vid = self.dirlist[audio_index]
 
             wavfile = self.data_dir + '/' + vid + '/audio.wav'
-            """try:
-                wav = audio.load_wav(wavfile, hp.sample_rate)
-
-                orig_mel = audio.melspectrogram(wav).T
-            except Exception as e:
-                continue"""
-
             try:
                 wavform, sf = torchaudio.load(wavfile)
                 specgram = torchaudio.transforms.MelSpectrogram(sample_rate=hp.sample_rate,
@@ -83,8 +76,7 @@ class SyncNetDataset(Dataset):
                                                                 win_length=hp.win_size,
                                                                 f_min=hp.fmin,
                                                                 f_max=hp.fmax,
-                                                                n_mels=hp.num_mels,
-                                                                normalized=hp.signal_normalizatio)
+                                                                n_mels=hp.num_mels)
                 orig_mel = specgram(wavform)[0]
                 orig_mel = orig_mel.t().numpy()
             except Exception as e:
