@@ -9,11 +9,12 @@ from models.SyncNetModel import SyncNetModel
 """
 
 
-class PreProcessor():
+class SyncnetScore():
     def __init__(self, data_root, default_threshold, checkpoint_pth):
         self.data_root = data_root
         self.dt = default_threshold
         self.checkpoint_pth = checkpoint_pth
+
     def __load_checkpoint(self,model):
         if torch.cuda.is_available():
             checkpoint = torch.load(self.checkpoint_pth)
@@ -29,10 +30,10 @@ class PreProcessor():
         return model
 
     def score_video(self):
-        root = self.data_root + '/processed'
+        root = self.data_root + '/processed_data'
 
         dir_list = []
-        for dir in Path.rglob(Path(root), '*'):
+        for dir in Path.rglob(Path(root), '*/*'):
             if dir.is_dir():
                 dir_list.append(str(dir))
 
@@ -44,10 +45,13 @@ class PreProcessor():
         syncnet = self.__load_checkpoint(syncnet)
 
         for dir in dir_list:
-            mel = self.__getMel(dir)
-            w = self.__getwindows(dir)
+            w = self.__getwindows(root+'/'+dir)
 
     def __getwindows(self, dir):
+        files=[]
+        for file in Path.glob(Path(dir), '**/*.jpg'):
+            if file.is_file():
+                files.append(file)
         pass
 
 
