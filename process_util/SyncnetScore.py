@@ -44,8 +44,7 @@ class PreProcessor():
         syncnet = self.__load_checkpoint(syncnet)
 
         for dir in dir_list:
-            mel = self.__getMel(dir)
-            w = self.__getwindows(dir)
+            w = self.__getwindows(root+'/'+dir)
 
     def __getwindows(self, dir):
         pass
