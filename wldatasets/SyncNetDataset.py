@@ -36,6 +36,8 @@ class SyncNetDataset(Dataset):
         x = x[:, x.shape[1] // 2:]
 
         mel = self.__get_segment_mel(img_dir,choosen)
+        if mel.shape[0] != int(self.hp.syncnet_mel_step_size):
+            print("mel's shape is 0 ,dir is {} {}".format(img_dir,choosen))
 
         x = torch.tensor(x, dtype=torch.float)
         mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
