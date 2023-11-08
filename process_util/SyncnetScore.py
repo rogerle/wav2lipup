@@ -7,6 +7,7 @@ import torch
 import torchaudio
 from torch import nn
 from torch.nn import functional as F
+
 from models.SyncNetModel import SyncNetModel
 
 """
@@ -20,7 +21,7 @@ class SyncnetScore():
         self.dt = default_threshold
         self.checkpoint_pth = checkpoint_pth
 
-    def __load_checkpoint(self,model):
+    def __load_checkpoint(self, model):
         if torch.cuda.is_available():
             checkpoint = torch.load(self.checkpoint_pth)
         else:
@@ -48,15 +49,15 @@ class SyncnetScore():
         for p in syncnet.parameters():
             p.requires_grad = False
         syncnet = self.__load_checkpoint(syncnet)
-
+        Path(root+'/score.txt').write_text('')
         for dir in dir_list:
-            score = self.__score(dir,syncnet)
-            print("{}:{}".format(dir,score))
-            with open(root+'score.txt','a') as f:
-                f.write("{}:{}".format(dir,score))
+            score = self.__score(dir, syncnet)
+            print("{}: {}".format(dir, score))
+            with open(root + '/score.txt', 'a') as f:
+                f.write("{}:{}\n".format(dir, score))
 
-    def __score(self, dir,syncnet):
-        files=[]
+    def __score(self, dir, syncnet):
+        files = []
         wavfile = dir + '/audio.wav'
         for file in Path.glob(Path(dir), '**/*.jpg'):
             if file.is_file():
@@ -65,17 +66,16 @@ class SyncnetScore():
         syncnet.eval()
         logloss = nn.BCELoss()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        td = 0
-        avgscore=0
-        for i in range(1,len(files)-6):
+        losses = []
+        for i in range(1, len(files) - 6):
             window = []
-            for idx in range(i,i+5):
-                img_name=dir+'/'+'{}.jpg'.format(idx)
+            for idx in range(i, i + 5):
+                img_name = dir + '/' + '{}.jpg'.format(idx)
                 img = cv2.imread(img_name)
                 try:
                     img = cv2.resize(img, (288, 288))
                 except Exception as e:
-                    print ('image resize error:{}'.format(e))
+                    print('image resize error:{}'.format(e))
                 window.append(img)
 
             x = np.concatenate(window, axis=2) / 255.
@@ -101,22 +101,23 @@ class SyncnetScore():
             mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
             x = x.unsqueeze(0)
             mel = mel.unsqueeze(0)
-            #计算分数
+            # 计算分数
             x = x.to(device)
             mel = mel.to(device)
 
-            a,v = syncnet(mel,x)
+            a, v = syncnet(mel, x)
 
             d = F.cosine_similarity(a, v)
+            if random.choice([True, False]):
+                y = torch.ones(1).float()
+            else:
+                y = torch.zeros(1).float()
+            y=y.to(device)
+            loss = logloss(d, y)
+            losses.append(loss)
+        return sum(losses) / len(losses)
 
-            td = td+d.item()
-            avgscore=td/i
-        return  avgscore
-
-
-
-
-    def __crop_audio_window(self,spec, start_frame):
+    def __crop_audio_window(self, spec, start_frame):
         start_frame_num = start_frame
 
         start_idx = int(80. * (start_frame_num / 25.))
@@ -126,7 +127,3 @@ class SyncnetScore():
         spec = spec[start_idx:end_idx, :]
 
         return spec
-
-
-
-

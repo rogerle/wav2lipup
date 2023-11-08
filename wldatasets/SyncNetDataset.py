@@ -88,10 +88,11 @@ class SyncNetDataset(Dataset):
         start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
 
         end_idx = start_idx + int(self.hp.syncnet_mel_step_size)
-
+        new_spec = np.zeros((16, 80),dtype=float)
         spec = spec[start_idx:end_idx, :]
+        new_spec[:spec.shape[0],:]=spec
 
-        return spec
+        return new_spec
 
     def __get_choosen(self, image_names):
         img_name = random.choice(image_names)
@@ -111,14 +112,16 @@ class SyncNetDataset(Dataset):
         wavfile = self.data_dir + '/' + img_dir + '/audio.wav'
         try:
             wavform, sf = torchaudio.load(wavfile)
+            wavform=torch.mean(wavform,dim=0)
             specgram = torchaudio.transforms.MelSpectrogram(sample_rate=self.hp.sample_rate,
                                                             n_fft=self.hp.n_fft,
                                                             hop_length=self.hp.hop_size,
                                                             win_length=self.hp.win_size,
                                                             f_min=self.hp.fmin,
                                                             f_max=self.hp.fmax,
-                                                            n_mels=self.hp.num_mels)
-            orig_mel = specgram(wavform)[0]
+                                                            n_mels=self.hp.num_mels,
+                                                            normalized=self.hp.signal_normalization)
+            orig_mel = specgram(wavform)
             orig_mel = orig_mel.t().numpy()
             spec = self.__crop_audio_window(orig_mel.copy(), int(choosen))
         except Exception as e:
