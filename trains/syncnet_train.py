@@ -24,7 +24,11 @@ def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     else:
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
 
-    model.load_state_dict(checkpoint['state_dict'])
+    s = checkpoint["state_dict"]
+    new_s = {}
+    for k, v in s.items():
+        new_s[k.replace('module.', '')] = v
+    model.load_state_dict(new_s)
     if not reset_optimizer:
         optimizer_state = checkpoint["optimizer"]
         if optimizer_state is not None:
