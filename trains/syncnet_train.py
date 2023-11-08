@@ -59,7 +59,7 @@ def eval_model(val_dataloader, global_step,device, model, checkpoint_dir,log_dir
     acc = 0
     acc_steps=0
     print('Evaluating for {} steps'.format(eval_steps))
-    with LogWriter(logdir=log_dir+"/syncnet_train/eval") as writer:
+    with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
         while 1:
             for vstep,(x,mel,y) in enumerate(val_dataloader):
                 model.eval()
@@ -91,7 +91,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
     checkpoint_interval = param.syncnet_checkpoint_interval
     eval_interval = param.syncnet_eval_interval
 
-    with LogWriter(logdir=log_dir+"/syncnet_train/train") as writer:
+    with LogWriter(logdir="../logs/syncnet_train/train") as writer:
         while epoch < numepochs:
             running_loss = 0
             prog_bar = tqdm(enumerate(train_dataloader),total=len(train_dataloader),leave = False)
