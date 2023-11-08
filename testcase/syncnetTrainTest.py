@@ -32,9 +32,9 @@ class TestSyncnetTrain(unittest.TestCase):
         param = ParamsUtil()
         train_dataset = SyncNetDataset(data_root, run_type='train', img_size=288)
         val_dataset = SyncNetDataset(data_root, run_type='eval', img_size=288)
-        train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True,
-                                      num_workers=1)
-        val_dataloader = DataLoader(val_dataset, batch_size=16,num_workers=1)
+        train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True,
+                                      num_workers=8,drop_last=True)
+        val_dataloader = DataLoader(val_dataset, batch_size=2,num_workers=8,drop_last=True)
 
         model = SyncNetModel().to(device)
         print("SyncNet Model's Total trainable params {}".format(
