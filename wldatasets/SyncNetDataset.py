@@ -25,7 +25,7 @@ class SyncNetDataset(Dataset):
         img_dir = self.dirlist[idx]
         image_names = self.__get_imgs(img_dir)
         image_names = image_names[:-5]
-
+        print('image names:{}'.format(image_names))
         #取图片进行训练
         choosen,y = self.__get_choosen(image_names)
         window = self.__get_window(choosen,img_dir)
@@ -51,7 +51,6 @@ class SyncNetDataset(Dataset):
             for line in f:
                 line = line.strip()
                 dirlist.append(line)
-
         return dirlist
 
     def __get_imgs(self, img_dir):
