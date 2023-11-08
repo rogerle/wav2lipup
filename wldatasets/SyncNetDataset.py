@@ -25,7 +25,8 @@ class SyncNetDataset(Dataset):
         img_dir = self.dirlist[idx]
         image_names = self.__get_imgs(img_dir)
         image_names = image_names[:-5]
-        print('image names:{}'.format(image_names))
+        if image_names is None or len(image_names)==0:
+            print('dir is {} {}'.format(idx,img_dir))
         #取图片进行训练
         choosen,y = self.__get_choosen(image_names)
         window = self.__get_window(choosen,img_dir)
