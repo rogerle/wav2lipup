@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 
+import torch
 from torch import optim
 from torch.utils.data import DataLoader
 
@@ -13,7 +14,7 @@ from wldatasets.SyncNetDataset import SyncNetDataset
 class TestSyncnetTrain(unittest.TestCase):
 
     def testGPUTrain(self):
-        device='cuda'
+        device=torch.device('cuda'if torch.cuda.is_available() else'cpu')
         data_root='../data/test_data/pr_data'
         train_txt = data_root + '/train.txt'
         eval_txt = data_root + '/eval.txt'
@@ -31,10 +32,9 @@ class TestSyncnetTrain(unittest.TestCase):
         param = ParamsUtil()
         train_dataset = SyncNetDataset(data_root, run_type='train', img_size=288)
         val_dataset = SyncNetDataset(data_root, run_type='eval', img_size=288)
-        train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
-                                      num_workers=param.num_works)
-        val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
-                                    num_workers=param.num_works)
+        train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True,
+                                      num_workers=1)
+        val_dataloader = DataLoader(val_dataset, batch_size=16,num_workers=1)
 
         model = SyncNetModel().to(device)
         print("SyncNet Model's Total trainable params {}".format(

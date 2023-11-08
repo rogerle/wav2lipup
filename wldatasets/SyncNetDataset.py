@@ -22,83 +22,24 @@ class SyncNetDataset(Dataset):
         self.img_size = kwargs['img_size']
 
     def __getitem__(self, idx):
-        while 1:
-            idx = random.randint(0, len(self.dirlist) - 1)
-            audio_index = idx
-            image_names = self.__get_imgs(idx)
-            hp = self.hp
-            if len(image_names) <= 3 * hp.syncnet_T:
-                continue
+        img_dir = self.dirlist[idx]
+        image_names = self.__get_imgs(img_dir)
+        image_names = image_names[:-5]
 
-            img_name = random.choice(image_names)
-            wrong_img_name = random.choice(image_names)
-            while wrong_img_name == img_name:
-                wrong_img_name = random.choice(image_names)
+        #取图片进行训练
+        choosen,y = self.__get_choosen(image_names)
+        window = self.__get_window(choosen,img_dir)
 
-            if random.choice([True, False]):
-                y = torch.ones(1).float()
-                chosen = img_name
-            else:
-                y = torch.zeros(1).float()
-                chosen = wrong_img_name
+        x = np.concatenate(window, axis=2) / 255.
+        x = x.transpose(2, 0, 1)
+        x = x[:, x.shape[1] // 2:]
 
-            window_fnames = self.__get_window(chosen)
-            if window_fnames is None:
-                continue
+        mel = self.__get_segment_mel(img_dir,choosen)
 
-            window = []
-            all_read = True
+        x = torch.tensor(x, dtype=torch.float)
+        mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
+        return x, mel, y
 
-            for fname in window_fnames:
-                img = cv2.imread(fname)
-                if img is None:
-                    all_read = False
-                    break
-                try:
-                    img = cv2.resize(img, (self.img_size, self.img_size))
-                except Exception as e:
-                    all_read = False
-                    break
-
-                window.append(img)
-
-            if not all_read:
-                continue
-
-            vid = self.dirlist[audio_index]
-
-            wavfile = self.data_dir + '/' + vid + '/audio.wav'
-            try:
-                wavform, sf = torchaudio.load(wavfile)
-                specgram = torchaudio.transforms.MelSpectrogram(sample_rate=hp.sample_rate,
-                                                                n_fft=hp.n_fft,
-                                                                hop_length=hp.hop_size,
-                                                                win_length=hp.win_size,
-                                                                f_min=hp.fmin,
-                                                                f_max=hp.fmax,
-                                                                n_mels=hp.num_mels)
-                orig_mel = specgram(wavform)[0]
-                orig_mel = orig_mel.t().numpy()
-            except Exception as e:
-                continue
-
-            mel = self.__crop_audio_window(orig_mel.copy(), img_name)
-
-            if mel.shape[0] != hp.syncnet_mel_step_size:
-                continue
-
-            # H x W x 3 * T
-            x = np.concatenate(window, axis=2) / 255.
-            x = x.transpose(2, 0, 1)
-            x = x[:, x.shape[1] // 2:]
-            """if torch.cuda.is_available() is True:
-                x = torch.tensor(x,dtype=torch.float,device='cuda')
-                mel = torch.tensor(np.transpose(mel,(1,0)),dtype=torch.float,device='cuda').unsqueeze(0)
-            else:"""
-            x = torch.tensor(x,dtype=torch.float)
-            mel = torch.tensor(np.transpose(mel,(1,0)),dtype=torch.float).unsqueeze(0)
-
-            return x, mel, y
 
     def __len__(self):
         return len(self.dirlist)
@@ -113,23 +54,27 @@ class SyncNetDataset(Dataset):
 
         return dirlist
 
-    def __get_imgs(self, index):
-        vid = self.dirlist[index]
+    def __get_imgs(self, img_dir):
         img_names = []
-        for img in Path().joinpath(self.data_dir, vid).glob('**/*.jpg'):
+        for img in Path(self.data_dir+'/'+img_dir).glob('**/*.jpg'):
+            img = img.stem
             img_names.append(img)
+        img_names.sort(key=int)
         return img_names
 
-    def __get_window(self, img_name):
-        start_id = int(Path(img_name).stem)
-        seek_id = start_id + self.hp.syncnet_T
-        vidPath = Path(img_name).parent
+    def __get_window(self, img_name,img_dir):
+        start_id = int(img_name)
+        seek_id = start_id + int(self.hp.syncnet_T)
+        vidPath = self.data_dir+'/'+img_dir
         window_frames = []
         for frame_id in range(start_id, seek_id):
-            frame = str(vidPath) + '/{}.jpg'.format(frame_id)
-            if not Path(frame).is_file():
-                return None
-            window_frames.append(frame)
+            frame = vidPath + '/{}.jpg'.format(frame_id)
+            img = cv2.imread(frame)
+            try:
+                img = cv2.resize(img, (self.img_size, self.img_size))
+            except Exception as e:
+                print('img resize exception:{}'.format(e))
+            window_frames.append(img)
         return window_frames
 
     def __crop_audio_window(self, spec, start_frame):
@@ -140,8 +85,44 @@ class SyncNetDataset(Dataset):
 
         start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
 
-        end_idx = start_idx + self.hp.syncnet_mel_step_size
+        end_idx = start_idx + int(self.hp.syncnet_mel_step_size)
 
         spec = spec[start_idx:end_idx, :]
 
         return spec
+
+    def __get_choosen(self, image_names):
+        img_name = random.choice(image_names)
+        wrong_img_name = random.choice(image_names)
+        while wrong_img_name == img_name:
+            wrong_img_name = random.choice(image_names)
+
+        if random.choice([True, False]):
+            y = torch.ones(1).float()
+            choosen = img_name
+        else:
+            y = torch.zeros(1).float()
+            choosen = wrong_img_name
+        return choosen,y
+
+    def __get_segment_mel(self, img_dir, choosen):
+        wavfile = self.data_dir + '/' + img_dir + '/audio.wav'
+        try:
+            wavform, sf = torchaudio.load(wavfile)
+            specgram = torchaudio.transforms.MelSpectrogram(sample_rate=self.hp.sample_rate,
+                                                            n_fft=self.hp.n_fft,
+                                                            hop_length=self.hp.hop_size,
+                                                            win_length=self.hp.win_size,
+                                                            f_min=self.hp.fmin,
+                                                            f_max=self.hp.fmax,
+                                                            n_mels=self.hp.num_mels)
+            orig_mel = specgram(wavform)[0]
+            orig_mel = orig_mel.t().numpy()
+            spec = self.__crop_audio_window(orig_mel.copy(), int(choosen))
+        except Exception as e:
+            print("Mel trasfer execption:{}".format(e))
+            spec = None
+
+        return spec
+
+

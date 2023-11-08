@@ -16,6 +16,6 @@ class TestSyncnetModel(unittest.TestCase):
 
     def testModelSummary(self):
         model = SyncNetModel()
-        faces = torch.randn(5,15,144,288)
-        audios = torch.randn(5,1,80,16)
+        faces = torch.randn(1,15,144,288)
+        audios = torch.randn(1,1,80,16)
         summary(model,input_data=(audios,faces),)
