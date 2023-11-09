@@ -90,11 +90,9 @@ class SyncNetDataset(Dataset):
         start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
 
         end_idx = start_idx + int(self.hp.syncnet_mel_step_size)
-        new_spec = np.zeros((16, 80),dtype=float)
         spec = spec[start_idx:end_idx, :]
-        new_spec[:spec.shape[0],:]=spec
 
-        return new_spec
+        return spec
 
     def __get_choosen(self, image_names):
         img_name = random.choice(image_names)

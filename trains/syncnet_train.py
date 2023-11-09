@@ -163,8 +163,6 @@ def main():
     if checkpoint_path is not None:
         model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
 
-    torch.multiprocessing.set_start_method('spawn')
-    
     train(device,model,train_dataloader,val_dataloader,optimizer,checkpoint_dir,start_step,start_epoch,log_dir)
 
 
