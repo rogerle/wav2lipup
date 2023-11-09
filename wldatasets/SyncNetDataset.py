@@ -6,6 +6,7 @@ import torch
 from pathlib import Path
 
 import torchaudio
+import torchaudio.functional as F
 from torch.utils.data import Dataset
 
 from process_util.ParamsUtil import ParamsUtil
@@ -80,6 +81,7 @@ class SyncNetDataset(Dataset):
         return window_frames
 
     def __crop_audio_window(self, spec, start_frame):
+        # num_frames = (T x hop_size * fps) / sample_rate
         if type(start_frame) == int:
             start_frame_num = start_frame
         else:
@@ -88,11 +90,11 @@ class SyncNetDataset(Dataset):
         start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
 
         end_idx = start_idx + int(self.hp.syncnet_mel_step_size)
-        new_spec = np.zeros((16, 80),dtype=float)
-        spec = spec[start_idx:end_idx, :]
-        new_spec[:spec.shape[0],:]=spec
 
-        return new_spec
+        spec = spec[start_idx:end_idx, :]
+        if spec.shape[0]<int(self.hp.syncnet_mel_step_size):
+            spec = torch.zeros(16,80).numpy()
+        return spec
 
     def __get_choosen(self, image_names):
         img_name = random.choice(image_names)
@@ -112,9 +114,11 @@ class SyncNetDataset(Dataset):
         wavfile = self.data_dir + '/' + img_dir + '/audio.wav'
         try:
             wavform, sf = torchaudio.load(wavfile)
-            wavform=torch.mean(wavform,dim=0)
+
+            wavform = F.preemphasis(wavform, self.hp.preemphasis)
             specgram = torchaudio.transforms.MelSpectrogram(sample_rate=self.hp.sample_rate,
                                                             n_fft=self.hp.n_fft,
+                                                            power=2,
                                                             hop_length=self.hp.hop_size,
                                                             win_length=self.hp.win_size,
                                                             f_min=self.hp.fmin,
@@ -122,6 +126,8 @@ class SyncNetDataset(Dataset):
                                                             n_mels=self.hp.num_mels,
                                                             normalized=self.hp.signal_normalization)
             orig_mel = specgram(wavform)
+            orig_mel = F.amplitude_to_DB(orig_mel,multiplier=10.,amin=self.hp.min_level_db,db_multiplier=self.hp.ref_level_db,top_db=80)
+            orig_mel = torch.mean(orig_mel, dim=0)
             orig_mel = orig_mel.t().numpy()
             spec = self.__crop_audio_window(orig_mel.copy(), int(choosen))
         except Exception as e:

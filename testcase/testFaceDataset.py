@@ -16,11 +16,11 @@ class TestFaceDataset(unittest.TestCase):
     def test_getItem(self):
         sData = FaceDataset('../data/test_data/pr_data', img_size=288)
         test_loader = DataLoader(sData)
-        for x,y,mel1,invid_mels in test_loader:
+        for x, indiv_mels, mel, y in test_loader:
             print("matrix x's size:{}".format(x.size()))
             print("matrix y size:{}".format(y.size()))
-            print("matrix mel1's size:{}".format(mel1.size()))
-            print("matrix invid_mes's size:{}".format(invid_mels.size()))
+            print("matrix mel1's size:{}".format(mel.size()))
+            print("matrix invid_mes's size:{}".format(indiv_mels.size()))
 
 
         """wavform, sf = torchaudio.load('../data/test_data/pr_data/000001/000001_00000_00006/audio.wav')
