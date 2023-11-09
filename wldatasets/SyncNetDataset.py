@@ -24,7 +24,7 @@ class SyncNetDataset(Dataset):
     def __getitem__(self, idx):
         img_dir = self.dirlist[idx]
         image_names = self.__get_imgs(img_dir)
-        image_names = image_names[:-16]
+        image_names = image_names[:-5]
         if image_names is None or len(image_names)==0:
             print('dir is {} {}'.format(idx,img_dir))
         #取图片进行训练
