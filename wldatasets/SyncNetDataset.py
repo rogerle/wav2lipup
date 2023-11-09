@@ -90,8 +90,10 @@ class SyncNetDataset(Dataset):
         start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
 
         end_idx = start_idx + int(self.hp.syncnet_mel_step_size)
-        spec = spec[start_idx:end_idx, :]
 
+        spec = spec[start_idx:end_idx, :]
+        if spec.shape[0]<int(self.hp.syncnet_mel_step_size):
+            spec = torch.randn(16,80).numpy()
         return spec
 
     def __get_choosen(self, image_names):
