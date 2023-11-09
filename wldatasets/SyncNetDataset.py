@@ -93,7 +93,7 @@ class SyncNetDataset(Dataset):
 
         spec = spec[start_idx:end_idx, :]
         if spec.shape[0]<int(self.hp.syncnet_mel_step_size):
-            spec = torch.randn(16,80).numpy()
+            spec = torch.zeros(16,80).numpy()
         return spec
 
     def __get_choosen(self, image_names):
