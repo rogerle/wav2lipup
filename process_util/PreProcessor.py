@@ -52,7 +52,9 @@ class PreProcessor():
                                           video)
             for time in timestamps:
                 tmpEnd = time['end']
-                if (tmpEnd - start) < 5000:
+                if time['start'] != start:
+                    start = time['start']
+                if (tmpEnd - start) < 1000:
                     continue
                 else:
                     startTime = round(start / 1000)
@@ -163,7 +165,8 @@ class PreProcessor():
         sentences = rec_result.get('sentences')
         timest = []
         for items in sentences:
-            timest.append({'start': items['start'], 'end': items['end']})
+            if items['text'] is not None and items['text'].strip() != '':
+                timest.append({'start': items['start'], 'text': items['text'], 'end': items['end']})
         fname = Path(video).name.replace('.mp4', '.json')
         path = Path(video).parent
         tf = str(path) + '/' + fname

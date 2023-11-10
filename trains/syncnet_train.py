@@ -53,11 +53,9 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
     print("save the checkpoint step {}".format(path))
 
 
-def eval_model(val_dataloader, global_step,device, model, checkpoint_dir,log_dir):
+def eval_model(val_dataloader, global_step,device, model):
     eval_steps = 1400
     losses = []
-    acc = 0
-    acc_steps=0
     print('Evaluating for {} steps'.format(eval_steps))
     with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
         while 1:
@@ -83,7 +81,7 @@ def eval_model(val_dataloader, global_step,device, model, checkpoint_dir,log_dir
             return
 
 
-def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir,start_step,start_epoch,log_dir):
+def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir,start_step,start_epoch):
 
     gloab_step = start_step
     epoch = start_epoch
@@ -121,7 +119,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
 
                 if gloab_step % eval_interval == 0:
                     with torch.no_grad():
-                        eval_model(val_dataloader,gloab_step,device,model,checkpoint_dir,log_dir)
+                        eval_model(val_dataloader,gloab_step,device,model)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch,numepochs))
                 prog_bar.set_postfix(train_loss=running_loss/(step+1),step=step + 1,gloab_step=gloab_step)
@@ -133,7 +131,6 @@ def main():
 
     checkpoint_dir = args.checkpoint_dir
     checkpoint_path = args.checkpoint_path
-    log_dir = args.log_dir
 
     Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
 
@@ -163,7 +160,7 @@ def main():
     if checkpoint_path is not None:
         model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
 
-    train(device,model,train_dataloader,val_dataloader,optimizer,checkpoint_dir,start_step,start_epoch,log_dir)
+    train(device,model,train_dataloader,val_dataloader,optimizer,checkpoint_dir,start_step,start_epoch)
 
 
 def parse_args():
@@ -174,8 +171,6 @@ def parse_args():
     parser.add_argument("--checkpoint_dir", help='Save checkpoints to this directory', required=True, type=str)
     parser.add_argument("--checkpoint_path", help='Resume from this checkpoint', default=None, type=str)
     parser.add_argument('--config_file', help='The train config file', default='../configs/train_config_288.yaml',
-                        required=True, type=str)
-    parser.add_argument('--log_dir', help='The train config file', default='../logs',
                         required=True, type=str)
     parser.add_argument('--gpunum', help='Resume qulity disc from this checkpoint', default=0, type=int)
 
