@@ -7,6 +7,7 @@ from pathlib import Path
 
 import torchaudio
 import torchaudio.functional as F
+import torchaudio.transforms as T
 from torch.utils.data import Dataset
 
 from process_util.ParamsUtil import ParamsUtil
@@ -119,7 +120,7 @@ class SyncNetDataset(Dataset):
             wavform = F.preemphasis(wavform, self.hp.preemphasis)
             specgram = torchaudio.transforms.MelSpectrogram(sample_rate=self.hp.sample_rate,
                                                             n_fft=self.hp.n_fft,
-                                                            power=2,
+                                                            power=1.,
                                                             hop_length=self.hp.hop_size,
                                                             win_length=self.hp.win_size,
                                                             f_min=self.hp.fmin,
@@ -127,14 +128,19 @@ class SyncNetDataset(Dataset):
                                                             n_mels=self.hp.num_mels,
                                                             normalized=self.hp.signal_normalization)
             orig_mel = specgram(wavform)
-            orig_mel = F.amplitude_to_DB(orig_mel,multiplier=10.,amin=self.hp.min_level_db,db_multiplier=self.hp.ref_level_db,top_db=80)
-            orig_mel = torch.mean(orig_mel, dim=0)
-            orig_mel = orig_mel.t().numpy()
+            orig_mel = T.AmplitudeToDB(stype='magnitude',top_db=80)(orig_mel)
+            orig_mel = orig_mel[0].t().numpy()
             spec = self.__crop_audio_window(orig_mel.copy(), int(choosen))
+            spec = self.__normalization(spec)
         except Exception as e:
             print("Mel trasfer execption:{}".format(e))
             spec = None
 
         return spec
-
-
+    def __normalization(self,S):
+        if self.hp.allow_clipping_in_normalization:
+            if self.hp.symmetric_mels:
+                return np.clip((2 * self.hp.max_abs_value) * ((S - self.hp.min_level_db) / (-self.hp.min_level_db)) - self.hp.max_abs_value,
+                               -self.hp.max_abs_value, self.hp.max_abs_value)
+            else:
+                return np.clip(self.hp.max_abs_value * ((S - self.hp.min_level_db) / (-self.hp.min_level_db)), 0, self.hp.max_abs_value)
