@@ -40,7 +40,7 @@ class SyncNetDataset(Dataset):
 
             mel = self.__get_segment_mel(img_dir,choosen)
             if mel.shape[0] != int(self.hp.syncnet_mel_step_size):
-                print("mel's shape is {} ,dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,choosen))
+                #print("mel's shape is {} ,dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,choosen))
                 continue
 
             x = torch.tensor(x, dtype=torch.float)
