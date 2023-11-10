@@ -25,24 +25,27 @@ class SyncNetDataset(Dataset):
     def __getitem__(self, idx):
         img_dir = self.dirlist[idx]
         image_names = self.__get_imgs(img_dir)
-        image_names = image_names[:-5]
+        sync_frames = int(len(image_names)/int(self.hp.fps)+int(self.hp.syncnet_T))
+        image_names = image_names[1:-sync_frames]
         if image_names is None or len(image_names)==0:
             print('dir is {} {}'.format(idx,img_dir))
         #取图片进行训练
-        choosen,y = self.__get_choosen(image_names)
-        window = self.__get_window(choosen,img_dir)
+        while 1:
+            choosen,y = self.__get_choosen(image_names)
+            window = self.__get_window(choosen,img_dir)
 
-        x = np.concatenate(window, axis=2) / 255.
-        x = x.transpose(2, 0, 1)
-        x = x[:, x.shape[1] // 2:]
+            x = np.concatenate(window, axis=2) / 255.
+            x = x.transpose(2, 0, 1)
+            x = x[:, x.shape[1] // 2:]
 
-        mel = self.__get_segment_mel(img_dir,choosen)
-        if mel.shape[0] != int(self.hp.syncnet_mel_step_size):
-            print("mel's shape is 0 ,dir is {} {}".format(img_dir,choosen))
+            mel = self.__get_segment_mel(img_dir,choosen)
+            if mel.shape[0] != int(self.hp.syncnet_mel_step_size):
+                print("mel's shape is {} ,dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,choosen))
+                continue
 
-        x = torch.tensor(x, dtype=torch.float)
-        mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
-        return x, mel, y
+            x = torch.tensor(x, dtype=torch.float)
+            mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
+            return x, mel, y
 
 
     def __len__(self):
@@ -87,13 +90,11 @@ class SyncNetDataset(Dataset):
         else:
             start_frame_num = int(Path(start_frame).stem)
 
-        start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
+        start_idx = int(80. * (start_frame_num / float(self.hp.fps))) #80.乘出来刚好是frame的长度
 
         end_idx = start_idx + int(self.hp.syncnet_mel_step_size)
 
         spec = spec[start_idx:end_idx, :]
-        if spec.shape[0]<int(self.hp.syncnet_mel_step_size):
-            spec = torch.zeros(16,80).numpy()
         return spec
 
     def __get_choosen(self, image_names):
