@@ -33,13 +33,13 @@ class SyncNetDataset(Dataset):
         #取图片进行训练
         while 1:
             img_name,choosen,y = self.__get_choosen(image_names)
-            window = self.__get_window(img_name,img_dir)
+            window = self.__get_window(choosen,img_dir)
 
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
             x = x[:, x.shape[1] // 2:]
 
-            mel = self.__get_segment_mel(img_dir,choosen)
+            mel = self.__get_segment_mel(img_dir,img_name)
             if mel.shape[0] != int(self.hp.syncnet_mel_step_size):
                 #print("mel's shape is {} ,dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,choosen))
                 continue
