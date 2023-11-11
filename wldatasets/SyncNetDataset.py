@@ -32,8 +32,8 @@ class SyncNetDataset(Dataset):
             print('dir is {} {}'.format(idx,img_dir))
         #取图片进行训练
         while 1:
-            choosen,y = self.__get_choosen(image_names)
-            window = self.__get_window(choosen,img_dir)
+            img_name,choosen,y = self.__get_choosen(image_names)
+            window = self.__get_window(img_name,img_dir)
 
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
@@ -110,7 +110,7 @@ class SyncNetDataset(Dataset):
         else:
             y = torch.zeros(1).float()
             choosen = wrong_img_name
-        return choosen,y
+        return img_name,choosen,y
 
     def __get_segment_mel(self, img_dir, choosen):
         wavfile = self.data_dir + '/' + img_dir + '/audio.wav'
