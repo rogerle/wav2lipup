@@ -42,5 +42,5 @@ class TestSyncnetTrain(unittest.TestCase):
         optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad], lr=param.syncnet_learning_rate)
         start_step = 0
         start_epoch = 0
-        syncnet_train.train(device, model, train_dataloader, val_dataloader, optimizer, '../data/test_data/checkpoint', start_step, start_epoch,'../logs')
+        syncnet_train.train(device, model, train_dataloader, val_dataloader, optimizer, '../data/test_data/checkpoint', start_step, start_epoch)
 

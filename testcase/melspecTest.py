@@ -1,3 +1,4 @@
+import random
 import unittest
 
 import librosa
@@ -12,11 +13,20 @@ from scipy import signal
 
 class MelSpecTest(unittest.TestCase):
     def testMelShow(self):
-        wavfile = "H:/wav2lip_data/data_2/processed_data/cctv7/0001_00058_00062/audio.wav"
+        wavfile = "../data/test_data/pr_data/000001/000001_00050_00058/audio.wav"
         wavform, sf = torchaudio.load(wavfile)
         spec = T.Spectrogram(n_fft=800,hop_length=200,win_length=800,power=1.0)(wavform)
         spec = T.AmplitudeToDB(stype='magnitude',
                                top_db=80.)(spec)
+        true=0
+        false1=0
+        for i in range(1,1000):
+            if random.choice([True, False]):
+                true +=1
+            else:
+                false1+=1
+
+        print('chosie true:{} flas:{}'.format(true,false1))
 
 
         asis = 0.97  # filter coefficient.
@@ -40,16 +50,17 @@ class MelSpecTest(unittest.TestCase):
 
 
         # num_frames = (T x hop_size * fps) / sample_rate
-        start_frame_num = 95
+        np.clip((2 * 4) * (
+                    (mel - (-100)) / (-(-100))) - 4,
+                -4, 4)
+        start_frame_num = 190
 
         start_idx = int(80. * (start_frame_num / float(25)))  # 80.乘出来刚好是frame的长度
 
         end_idx = start_idx + 16
         mel = mel[start_idx:end_idx,:]
 
-        np.clip((2 * 4) * (
-                    (mel - (-100)) / (-(-100))) - 4,
-                -4, 4)
+
         fig, axs = plt.subplots(3, 1)
         self.plot_wavform(wavform,sf,title='Original wavform',ax=axs[0])
         self.plot_spectrogram(spec[0],title="spectrogram",ax=axs[1])
