@@ -69,10 +69,17 @@ class DataProcessor():
             boxes = face_result['boxes']
             if scores is None or len(scores) == 0:
                 print('bad face video,drop it!')
-                break
+                continue
             else:
-                max_score = scores[0]
-                for i, score in enumerate(scores):
+                idx = scores.index(max(scores))
+                box = boxes[idx]
+                x1, y1, x2, y2 = box
+                file_name = split_dir + '/{}.jpg'.format(j)
+                face = frame[int(y1):int(y2), int(x1):int(x2)]
+                #faces['{}'.format(j)] = face
+                cv2.imwrite(file_name, face)
+                """max_score = scores[0]
+                   for i, score in enumerate(scores):
                     if score >= max_score:
                         max_score = score
                         box = boxes[i]
@@ -80,7 +87,7 @@ class DataProcessor():
                         file_name = split_dir + '/{}.jpg'.format(j)
                         face = frame[int(y1):int(y2), int(x1):int(x2)]
                         faces['{}'.format(j)]=face
-                        cv2.imwrite(file_name, face)
+                        cv2.imwrite(file_name, face)"""
             prog_bar.set_description('Extract Face Image：{}.jpg'.format(j))
 
         #写入脸部文件“faces.bin",注意的是这个里面保存的是dict文件

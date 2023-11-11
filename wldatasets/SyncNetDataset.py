@@ -41,7 +41,7 @@ class SyncNetDataset(Dataset):
 
             mel = self.__get_segment_mel(img_dir,img_name)
             if mel.shape[0] != int(self.hp.syncnet_mel_step_size):
-                #print("mel's shape is {} ,dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,choosen))
+                #print("mel's shape is {} ,dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,img_name))
                 continue
 
             x = torch.tensor(x, dtype=torch.float)
@@ -86,11 +86,7 @@ class SyncNetDataset(Dataset):
 
     def __crop_audio_window(self, spec, start_frame):
         # num_frames = (T x hop_size * fps) / sample_rate
-        if type(start_frame) == int:
-            start_frame_num = start_frame
-        else:
-            start_frame_num = int(Path(start_frame).stem)
-
+        start_frame_num = start_frame
         start_idx = int(80. * (start_frame_num / float(self.hp.fps))) #80.乘出来刚好是frame的长度
 
         end_idx = start_idx + int(self.hp.syncnet_mel_step_size)
