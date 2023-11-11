@@ -27,7 +27,7 @@ class SyncNetDataset(Dataset):
         img_dir = self.dirlist[idx]
         image_names = self.__get_imgs(img_dir)
         sync_frames = int(len(image_names)/int(self.hp.fps)+int(self.hp.syncnet_T))
-        image_names = image_names[1:-sync_frames]
+        image_names = image_names[:-sync_frames]
         if image_names is None or len(image_names)==0:
             print('dir is {} {}'.format(idx,img_dir))
         #取图片进行训练
