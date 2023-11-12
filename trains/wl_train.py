@@ -280,8 +280,8 @@ def main():
     train_data_loader = DataLoader(train_dataset, batch_size=param.batch_size, shuffle=True,
                                    num_workers=param.num_works)
 
-    test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
-                                  num_workers=param.num_works)
+    test_data_loader = DataLoader(test_dataset, batch_size=2,
+                                  num_workers=8)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
