@@ -54,7 +54,7 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 
 
 def eval_model(val_dataloader, global_step, device, model):
-    eval_steps = 1400
+    eval_steps = 300
     losses = []
     print('Evaluating for {} steps'.format(eval_steps))
     with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
@@ -137,8 +137,8 @@ def main():
 
     train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
                                   num_workers=param.num_works, drop_last=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=8,
-                                num_workers=8, drop_last=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=32,
+                                num_workers=param.num_works, drop_last=True)
 
     if args.gpunum > 0:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

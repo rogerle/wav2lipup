@@ -13,30 +13,34 @@ class FaceCreator(nn.Module):
         self.face_encoder_block = nn.ModuleList([
             nn.Sequential(BaseConv2D(6, 16, 7, 1, 3)),  # 输入形状 [5,6,288 288]
 
-            # 144 144
-            nn.Sequential(BaseConv2D(16, 32, 5, 2, 2),
+
+            nn.Sequential(BaseConv2D(16, 32, 5, 2, 2), # 144 144
+                          BaseConv2D(32, 32, 3, 1, 1, residual=True)),
+
+            nn.Sequential(BaseConv2D(32, 32, 3, 2, 1),  # 72 72
                           BaseConv2D(32, 32, 3, 1, 1, residual=True),
                           BaseConv2D(32, 32, 3, 1, 1, residual=True)),
-            # 转成 72 72
-            nn.Sequential(BaseConv2D(32, 64, 5, 2, 2),
+
+            nn.Sequential(BaseConv2D(32, 64, 3, 2, 1),  # 转成 36 36
                           BaseConv2D(64, 64, 3, 1, 1, residual=True),
                           BaseConv2D(64, 64, 3, 1, 1, residual=True),
                           BaseConv2D(64, 64, 3, 1, 1, residual=True),),
-            # 转成 24 24
-            nn.Sequential(BaseConv2D(64, 128, 5, 3, 2),
+
+            nn.Sequential(BaseConv2D(64, 128, 3, 2, 1),  # 转成 18 18
                           BaseConv2D(128, 128, 3, 1, 1, residual=True),
                           BaseConv2D(128, 128, 3, 1, 1, residual=True)),
-            # 12 12
-            nn.Sequential(BaseConv2D(128, 256, 3, 2, 1),
+
+            nn.Sequential(BaseConv2D(128, 256, 3, 2, 1),  # 9 9
+                          BaseConv2D(256, 256, 3, 1, 1, residual=True),
                           BaseConv2D(256, 256, 3, 1, 1, residual=True)),
-            # 6 6
-            nn.Sequential(BaseConv2D(256, 512, 3, 2, 1),
+
+            nn.Sequential(BaseConv2D(256, 512, 3, 2, 1),  # 5 5
                           BaseConv2D(512, 512, 3, 1, 1, residual=True)),
-            # 3 3
-            nn.Sequential(BaseConv2D(512, 512, 3, 2, 1),
+
+            nn.Sequential(BaseConv2D(512, 512, 3, 1, 0),  # 3 3
                           BaseConv2D(512, 512, 3, 1, 1, residual=True)),
             # 1 1
-            nn.Sequential(BaseConv2D(512, 512, 3, 1, 0),
+            nn.Sequential(BaseConv2D(512, 512, 3, 1, 0),  # 1  1
                           BaseConv2D(512, 512, 1, 1, 0))
         ])
 
@@ -65,37 +69,41 @@ class FaceCreator(nn.Module):
             nn.Sequential(BaseConv2D(512, 512, 1, 1, 0)),# 1 1
 
 
-            nn.Sequential(BaseTranspose(1024, 512, 3, 1, 0),
-                          BaseConv2D(512, 512, 3, 1, 1, residual=True)),# 3 3
+            nn.Sequential(BaseTranspose(1024, 512, kernel_size=3, stride=1, padding=0),
+                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True)),# 3 3
 
-            nn.Sequential(BaseTranspose(1024, 512, 3, 2, 1, 1),
-                          BaseConv2D(512, 512, 3, 1, 1, residual=True),
-                          BaseConv2D(512, 512, 3, 1, 1, residual=True)),# 6 6
+            nn.Sequential(BaseTranspose(1024, 512, kernel_size=3, stride=2, padding=1),
+                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
+                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True)), # 5 5
 
-            nn.Sequential(BaseTranspose(1024, 512, 3, 2, 1, 1),
-                          BaseConv2D(512, 512, 3, 1, 1, residual=True),
-                          BaseConv2D(512, 512, 3, 1, 1, residual=True)), # 12 12
+            nn.Sequential(BaseTranspose(1024, 512, kernel_size=3, stride=2, padding=1),
+                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
+                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True)), # 9 9
 
-            nn.Sequential(BaseTranspose(768, 384, 3, 2, 1, 1),
-                          BaseConv2D(384, 384, 3, 1, 1, residual=True),
-                          BaseConv2D(384, 384, 3, 1, 1, residual=True)), # 24 24
+            nn.Sequential(BaseTranspose(768, 384, kernel_size=3, stride=2, padding=1, output_padding=1),
+                          BaseConv2D(384, 384, kernel_size=3, stride=1, padding=1, residual=True),
+                          BaseConv2D(384, 384, kernel_size=3, stride=1, padding=1, residual=True)), # 18 18
 
-            nn.Sequential(BaseTranspose(512, 256, 5, 3, 2, 2),
-                          BaseConv2D(256, 256, 3, 1, 1, residual=True),
-                          BaseConv2D(256, 256, 3, 1, 1, residual=True)), #72 72
+            nn.Sequential(BaseTranspose(512, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
+                          BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
+                          BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True)), #36 36
 
-            nn.Sequential(BaseTranspose(320, 128, 5, 2, 2, 1),
-                          BaseConv2D(128, 128, 3, 1, 1, residual=True),
-                          BaseConv2D(128, 128, 3, 1, 1, residual=True)), #144 144
+            nn.Sequential(BaseTranspose(320, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
+                          BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
+                          BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True)), #72 72
 
-            nn.Sequential(BaseTranspose(160, 64, 5, 2, 2, 1),
-                          BaseConv2D(64, 64, 3, 1, 1, residual=True),
-                          BaseConv2D(64, 64, 3, 1, 1, residual=True)),# 288 288
+            nn.Sequential(BaseTranspose(160, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
+                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
+                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True)),  # 144 144
+
+            nn.Sequential(BaseTranspose(96, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
+                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
+                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True)),# 288 288
 
         ])
 
-        self.output_block = nn.Sequential(BaseConv2D(80, 32, 3, 1, 1),
-                                          BaseConv2D(32, 3, 1, 1, 0),
+        self.output_block = nn.Sequential(BaseConv2D(80, 32, kernel_size=3, stride=1, padding=1),
+                                          BaseConv2D(32, 3, kernel_size=1, stride=1, padding=0),
                                           nn.Sigmoid())
 
     def forward(self, audio_sequences, face_sequences):
