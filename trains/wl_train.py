@@ -26,6 +26,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 syncnet = SyncNetModel().to(device)
 for p in syncnet.parameters():
     p.requires_grad = False
+
+
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     print("Load checkpoint from: {}".format(checkpoint_path))
 
@@ -78,8 +80,8 @@ def save_sample_images(x, g, gt, global_step, checkpoint_dir):
         collage = np.concatenate((refs, inps, g, gt), axis=-2)
         for batch_idx, c in enumerate(collage):
             for t in range(len(c)):
-                cv2.imwrite('{}/{}_{}.jpg'.format(folder, batch_idx, t), c[t]/255.)
-                writer.add_image('sample', c[t]/255., step=global_step,dataformats='HWC')
+                cv2.imwrite('{}/{}_{}.jpg'.format(folder, batch_idx, t), c[t] / 255.)
+                writer.add_image('sample', c[t] / 255., step=global_step, dataformats='HWC')
 
 
 def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, prefix=''):
@@ -94,7 +96,7 @@ def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, prefix
     print("Saved checkpoint:", checkpoint_path)
 
 
-def eval_model(test_data_loader, model, disc,global_step):
+def eval_model(test_data_loader, model, disc, global_step):
     eval_steps = 300
     print('Evaluating for {} steps:'.format(eval_steps))
     running_sync_loss, running_l1_loss, running_disc_real_loss, running_disc_fake_loss, running_perceptual_loss = [], [], [], [], []
@@ -149,12 +151,12 @@ def eval_model(test_data_loader, model, disc,global_step):
                 sum(running_disc_real_loss) / len(
                     running_disc_real_loss)))
             eval_loss = sum(running_sync_loss) / len(running_sync_loss)
-            writer.add_scalar(tag='eval/loss',step=global_step,value=eval_loss)
+            writer.add_scalar(tag='eval/loss', step=global_step, value=eval_loss)
 
             return eval_loss
 
 
-def train(device, model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
+def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
           start_step, start_epoch):
     global_step = start_step
     epoch = start_epoch
@@ -197,7 +199,7 @@ def train(device, model, disc, train_data_loader, test_data_loader, optimizer, d
                 l1loss = recon_loss(g, gt)
 
                 loss = syncnet_wt * sync_loss + param.disc_wt * perceptual_loss + (
-                            1. - param.syncnet_wt - param.disc_wt) * l1loss
+                        1. - param.syncnet_wt - param.disc_wt) * l1loss
 
                 loss.backward()
                 optimizer.step()
@@ -241,13 +243,14 @@ def train(device, model, disc, train_data_loader, test_data_loader, optimizer, d
 
                 if global_step % eval_interval == 0:
                     with torch.no_grad():
-                        average_sync_loss = eval_model(test_data_loader,model,disc,global_step)
+                        average_sync_loss = eval_model(test_data_loader, model, disc, global_step)
                         writer.add_scalar(tag='eval/loss', step=global_step, value=average_sync_loss)
                         if average_sync_loss < .75:
                             syncnet_wt = 0.03
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, numepochs))
-                prog_bar.set_postfix(Step=global_step,L1=running_l1_loss / (step + 1), Sync=running_sync_loss / (step + 1),
+                prog_bar.set_postfix(Step=global_step, L1=running_l1_loss / (step + 1),
+                                     Sync=running_sync_loss / (step + 1),
                                      Percep=running_perceptual_loss / (step + 1),
                                      Fake=running_disc_fake_loss / (step + 1), Real=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/L1_loss', step=global_step, value=running_l1_loss / (step + 1))
@@ -255,7 +258,6 @@ def train(device, model, disc, train_data_loader, test_data_loader, optimizer, d
                 writer.add_scalar(tag='train/Percep_loss', step=global_step, value=running_perceptual_loss / (step + 1))
                 writer.add_scalar(tag='train/Real_loss', step=global_step, value=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/Fake_loss', step=global_step, value=running_disc_fake_loss / (step + 1))
-
 
             epoch += 1
 
@@ -280,12 +282,8 @@ def main():
     test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
                                   num_workers=param.num_works)
 
-
-
     model = FaceCreator().to(device)
     disc = Discriminator().to(device)
-
-
 
     print('total trainable params {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print('total DISC trainable params {}'.format(sum(p.numel() for p in disc.parameters() if p.requires_grad)))
@@ -305,10 +303,10 @@ def main():
                                                         reset_optimizer=False)
 
     # 装在sync_net
-    syncnet, step, epoch = load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
+    syncnet, step, epoch = load_checkpoint(syncnet_checkpoint_path, None, reset_optimizer=True)
 
     torch.multiprocessing.set_start_method('spawn')
-    train(device, model, disc, syncnet, train_data_loader, test_data_loader, optimizer, disc_optimizer,
+    train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer,
           checkpoint_dir=checkpoint_dir, start_step=start_step, start_epoch=start_epoch)
 
 
