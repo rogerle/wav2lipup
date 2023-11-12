@@ -17,14 +17,17 @@ class Discriminator(nn.Module):
             nn.Sequential(BaseNormConv(64, 128, kernel_size=5, stride=2, padding=2),  # 72,72
                           BaseNormConv(128, 128, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(128, 256, kernel_size=5, stride=3, padding=2),  # 24,24
+            nn.Sequential(BaseNormConv(128, 128, kernel_size=5, stride=2, padding=2),  # 36,36
+                          BaseNormConv(128, 128, kernel_size=5, stride=1, padding=2)),
+
+            nn.Sequential(BaseNormConv(128, 256, kernel_size=5, stride=2, padding=2),  # 18,18
                           BaseNormConv(256, 256, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(256, 512, kernel_size=3, stride=2, padding=1),  # 12,12
-                          BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1)),
+            nn.Sequential(BaseNormConv(256, 256, kernel_size=5, stride=2, padding=2),  # 9,9
+                          BaseNormConv(256, 256, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=2, padding=1),  # 6,6
-                          BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1), ),
+            nn.Sequential(BaseNormConv(256, 512, kernel_size=3, stride=2, padding=1),  # 5,5
+                          BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1)),
 
             nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=2, padding=1),  # 3,3
                           BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1), ),
