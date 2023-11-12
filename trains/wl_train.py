@@ -174,6 +174,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
             for step, (x, indiv_mels, mel, gt) in prog_bar:
                 disc.train()
                 model.train()
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
                 x = x.to(device)
                 mel = mel.to(device)
@@ -282,6 +283,8 @@ def main():
     test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
                                   num_workers=param.num_works)
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     model = FaceCreator().to(device)
     disc = Discriminator().to(device)
 
@@ -303,7 +306,7 @@ def main():
                                                         reset_optimizer=False)
 
     # 装在sync_net
-    syncnet, step, epoch = load_checkpoint(syncnet_checkpoint_path, None, reset_optimizer=True)
+    load_checkpoint(syncnet_checkpoint_path, syncnet,None, reset_optimizer=True)
 
     torch.multiprocessing.set_start_method('spawn')
     train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer,
