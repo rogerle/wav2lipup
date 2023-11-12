@@ -27,7 +27,6 @@ class Discriminator(nn.Module):
                           BaseNormConv(256, 256, kernel_size=5, stride=1, padding=2)),
 
             nn.Sequential(BaseNormConv(256, 512, kernel_size=3, stride=2, padding=1),  # 5,5
-                          BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1),
                           BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1)),
 
             nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=2, padding=1),  # 3,3
