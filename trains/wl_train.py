@@ -20,7 +20,12 @@ param = ParamsUtil()
 logloss = nn.BCELoss()
 recon_loss = nn.L1Loss()
 
+# 判断是否使用gpu
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+syncnet = SyncNetModel().to(device)
+for p in syncnet.parameters():
+    p.requires_grad = False
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     print("Load checkpoint from: {}".format(checkpoint_path))
 
@@ -52,11 +57,11 @@ def cosine_loss(a, v, y):
     return loss
 
 
-def get_sync_loss(sync_net, device, mel, g):
+def get_sync_loss(mel, g):
     g = g[:, :, :, g.size(3) // 2:]
     g = torch.cat([g[:, :, i] for i in range(param.syncnet_T)], dim=1)
     # B, 3 * T, H//2, W
-    a, v = sync_net(mel, g)
+    a, v = syncnet(mel, g)
     y = torch.ones(g.size(0), 1).float().to(device)
     return cosine_loss(a, v, y)
 
@@ -89,7 +94,7 @@ def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, prefix
     print("Saved checkpoint:", checkpoint_path)
 
 
-def eval_model(test_data_loader, syncnet_wt, device, model, disc,syncnet,global_step):
+def eval_model(test_data_loader, model, disc,global_step):
     eval_steps = 300
     print('Evaluating for {} steps:'.format(eval_steps))
     running_sync_loss, running_l1_loss, running_disc_real_loss, running_disc_fake_loss, running_perceptual_loss = [], [], [], [], []
@@ -114,7 +119,7 @@ def eval_model(test_data_loader, syncnet_wt, device, model, disc,syncnet,global_
                 running_disc_real_loss.append(disc_real_loss.item())
                 running_disc_fake_loss.append(disc_fake_loss.item())
 
-                sync_loss = get_sync_loss(sync_net=syncnet,device=device,mel=mel, g=g)
+                sync_loss = get_sync_loss(mel=mel, g=g)
 
                 if param.disc_wt > 0.:
                     perceptual_loss = disc.perceptual_forward(g)
@@ -149,7 +154,7 @@ def eval_model(test_data_loader, syncnet_wt, device, model, disc,syncnet,global_
             return eval_loss
 
 
-def train(device, model, disc, sync_net, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
+def train(device, model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
           start_step, start_epoch):
     global_step = start_step
     epoch = start_epoch
@@ -180,7 +185,7 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
                 g = model(indiv_mels, x)
 
                 if syncnet_wt > 0.:
-                    sync_loss = get_sync_loss(sync_net, device, mel, g)
+                    sync_loss = get_sync_loss(mel, g)
                 else:
                     sync_loss = 0.
 
@@ -236,7 +241,7 @@ def train(device, model, disc, sync_net, train_data_loader, test_data_loader, op
 
                 if global_step % eval_interval == 0:
                     with torch.no_grad():
-                        average_sync_loss = eval_model(test_data_loader, syncnet_wt, device, model, disc,sync_net,global_step)
+                        average_sync_loss = eval_model(test_data_loader,model,disc,global_step)
                         writer.add_scalar(tag='eval/loss', step=global_step, value=average_sync_loss)
                         if average_sync_loss < .75:
                             syncnet_wt = 0.03
@@ -275,15 +280,12 @@ def main():
     test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
                                   num_workers=param.num_works)
 
-    # 判断是否使用gpu
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
     model = FaceCreator().to(device)
     disc = Discriminator().to(device)
 
-    syncnet = SyncNetModel().to(device)
-    for p in syncnet.parameters():
-        p.requires_grad = False
+
 
     print('total trainable params {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print('total DISC trainable params {}'.format(sum(p.numel() for p in disc.parameters() if p.requires_grad)))
