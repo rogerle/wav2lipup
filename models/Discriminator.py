@@ -33,9 +33,11 @@ class Discriminator(nn.Module):
                           BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1), ),
 
             nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=1, padding=0),  # 1, 1
+                          BaseNormConv(512, 512, kernel_size=1, stride=1, padding=0),
                           BaseNormConv(512, 512, kernel_size=1, stride=1, padding=0))])
 
-        self.binary_pred = nn.Sequential(nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0),
+        self.binary_pred = nn.Sequential(nn.Conv2d(512, 512, kernel_size=1, stride=1, padding=0),
+                                         nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0),
                                          nn.Sigmoid())
         self.label_noise = .0
 
