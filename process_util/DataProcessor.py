@@ -60,8 +60,8 @@ class DataProcessor():
 
     def __extract_face_img(self, frames, split_dir):
         prog_bar = tqdm(enumerate(frames), total=len(frames), leave=False)
-        faces={}
-        face_file = split_dir+'/faces.pkl'
+        #faces={}
+        #face_file = split_dir+'/faces.pkl'
         for j, frame in prog_bar:
             j = j+1
             face_result = self.face_detector.faceDetec(frame)
