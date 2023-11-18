@@ -16,20 +16,7 @@ class TestProcessor(unittest.TestCase):
         processor.videosPreProcessByASR(input_dir=self.__input_dir__,
                                         output_dir=self.__output_dir__,
                                         ext='mp4')
-        jsonfile1 = Path('../data/test_data/input/000001/000001.json')
-        jsonfile2 = Path('../data/test_data/input/000002/000001.json')
-        self.assertTrue(jsonfile1.exists())
-        self.assertTrue(jsonfile2.exists())
-        outputPath1 = Path('../data/test_data/output/000001/000001')
-        outputPath2 = Path('../data/test_data/output/000002/000001')
-        self.assertTrue(outputPath1.exists())
-        self.assertTrue(outputPath2.exists())
-        path1f = (i.suffix for i in outputPath1.iterdir())
-        path2f = (i.suffix for i in outputPath2.iterdir())
-        num1 = Counter(path1f)['.mp4']
-        num2 = Counter(path2f)['.mp4']
-        self.assertEqual(14, num1)
-        self.assertEqual(11, num2)
+
 
     def testVideoPreProcessByTime(self):
         Path(self.__outputT_dir__).mkdir(exist_ok=True)

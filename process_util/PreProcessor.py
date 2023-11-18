@@ -107,7 +107,7 @@ class PreProcessor():
                                                     startTime,
                                                     endTime)
         clipVideo = videoClip.subclip(startTime, endTime)
-        clipVideo.write_videofile(outputName)
+        clipVideo.write_videofile(outputName,fps=25)
 
     '''
         处理文件后的输出目录生成并返回目录名称
