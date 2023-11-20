@@ -92,6 +92,15 @@ def train_file_write(inputdir):
         with open(inputdir+'/'+file_name,'w',encoding='utf-8') as fi:
             fi.write("\n".join(data_set))
 
+def clear_data(inputdir):
+    result_list = []
+    for line in Path.glob(Path(inputdir), '*/*'):
+        if line.is_dir():
+            dirs = line.parts
+            input_line = str(dirs[-2] + '/' + dirs[-1])
+            result_list.append(input_line)
+
+
 
 def main():
     args = parse_args()

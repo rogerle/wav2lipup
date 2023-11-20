@@ -30,9 +30,7 @@ class SyncNetDataset(Dataset):
             image_names = self.__get_imgs(img_dir)
             image_names = image_names[:-5]
             if image_names is None or len(image_names)==0:
-                print('dir is {} {}'.format(idx,img_dir))
-                self.dirlist.remove(img_dir)
-                Path.rmdir(self.data_dir+'/'+img_dir)
+                print('dir is {} {} is empty'.format(idx,img_dir))
                 continue
             elif len(image_names)<5:
                 continue
