@@ -80,11 +80,10 @@ class SyncNetDataset(Dataset):
         window_frames = []
         for frame_id in range(start_id, seek_id):
             frame = vidPath + '/{}.jpg'.format(frame_id)
-            img = cv2.imread(frame)
             try:
+                img = cv2.imread(frame)
                 img = cv2.resize(img, (self.img_size, self.img_size))
             except Exception as e:
-                print('img resize exception:{}'.format(e))
                 return None
             window_frames.append(img)
         return window_frames
