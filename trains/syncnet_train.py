@@ -93,7 +93,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
             prog_bar = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)
 
             for step, (x, mel, y) in prog_bar:
-                model.train(),
+                model.train()
                 optimizer.zero_grad()
 
                 # transform data to cuda
