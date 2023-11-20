@@ -80,6 +80,8 @@ class SyncNetDataset(Dataset):
         window_frames = []
         for frame_id in range(start_id, seek_id):
             frame = vidPath + '/{}.jpg'.format(frame_id)
+            if Path(frame).exists() is False:
+                return None
             try:
                 img = cv2.imread(frame)
                 img = cv2.resize(img, (self.img_size, self.img_size))
