@@ -34,6 +34,8 @@ class SyncNetDataset(Dataset):
         while 1:
             img_name,choosen,y = self.__get_choosen(image_names)
             window = self.__get_window(choosen,img_dir)
+            if window is None or len(window) < 5:
+                continue
 
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
