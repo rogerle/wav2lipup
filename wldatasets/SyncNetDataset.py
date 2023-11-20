@@ -28,11 +28,8 @@ class SyncNetDataset(Dataset):
             idx = random.randint(0, len(self.dirlist) - 1)
             img_dir = self.dirlist[idx]
             image_names = self.__get_imgs(img_dir)
-            image_names = image_names[:-5]
             if image_names is None or len(image_names)==0:
                 print('dir is {} {} is empty'.format(idx,img_dir))
-                continue
-            elif len(image_names)<5:
                 continue
         #取图片进行训练
 
