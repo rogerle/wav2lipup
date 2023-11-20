@@ -28,12 +28,13 @@ class SyncNetDataset(Dataset):
             idx = random.randint(0, len(self.dirlist) - 1)
             img_dir = self.dirlist[idx]
             image_names = self.__get_imgs(img_dir)
-            sync_frames = int(len(image_names)/int(self.hp.fps)+int(self.hp.syncnet_T))
-            image_names = image_names[:-sync_frames]
+            image_names = image_names[:-5]
             if image_names is None or len(image_names)==0:
                 print('dir is {} {}'.format(idx,img_dir))
                 self.dirlist.remove(img_dir)
                 Path.rmdir(self.data_dir+'/'+img_dir)
+                continue
+            elif len(image_names)<5:
                 continue
         #取图片进行训练
 
