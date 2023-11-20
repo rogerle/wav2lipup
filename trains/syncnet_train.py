@@ -54,7 +54,7 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 
 
 def eval_model(val_dataloader, global_step, device, model):
-    eval_steps = 300
+    eval_steps = 1400
     losses = []
     print('Evaluating for {} steps'.format(eval_steps))
     with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
