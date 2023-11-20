@@ -24,14 +24,19 @@ class SyncNetDataset(Dataset):
         self.img_size = kwargs['img_size']
 
     def __getitem__(self, idx):
-        img_dir = self.dirlist[idx]
-        image_names = self.__get_imgs(img_dir)
-        sync_frames = int(len(image_names)/int(self.hp.fps)+int(self.hp.syncnet_T))
-        image_names = image_names[:-sync_frames]
-        if image_names is None or len(image_names)==0:
-            print('dir is {} {}'.format(idx,img_dir))
-        #取图片进行训练
         while 1:
+            idx = random.randint(0, len(self.dirlist) - 1)
+            img_dir = self.dirlist[idx]
+            image_names = self.__get_imgs(img_dir)
+            sync_frames = int(len(image_names)/int(self.hp.fps)+int(self.hp.syncnet_T))
+            image_names = image_names[:-sync_frames]
+            if image_names is None or len(image_names)==0:
+                print('dir is {} {}'.format(idx,img_dir))
+                self.dirlist.remove(img_dir)
+                Path.rmdir(self.data_dir+'/'+img_dir)
+                continue
+        #取图片进行训练
+
             img_name,choosen,y = self.__get_choosen(image_names)
             window = self.__get_window(choosen,img_dir)
 
