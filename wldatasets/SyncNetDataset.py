@@ -39,6 +39,9 @@ class SyncNetDataset(Dataset):
             img_name,choosen,y = self.__get_choosen(image_names)
             window = self.__get_window(choosen,img_dir)
 
+            if window is None:
+                continue
+
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
             x = x[:, x.shape[1] // 2:]
@@ -85,6 +88,7 @@ class SyncNetDataset(Dataset):
                 img = cv2.resize(img, (self.img_size, self.img_size))
             except Exception as e:
                 print('img resize exception:{}'.format(e))
+                return None
             window_frames.append(img)
         return window_frames
 
