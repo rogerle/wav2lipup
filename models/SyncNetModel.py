@@ -11,19 +11,15 @@ class SyncNetModel(nn.Module):
 
         self.face_encoder = nn.Sequential(
             BaseConv2D(15, 32, (7, 7), 1, 3), #144 288
-
+            # 144 144
             BaseConv2D(32, 64, kernel_size=5, stride=(1, 2), padding=2),
             BaseConv2D(64, 64, kernel_size=5, stride=1, padding=2, residual=True),
-            BaseConv2D(64, 64, kernel_size=5, stride=1, padding=2, residual=True),# 144 144
-
+            BaseConv2D(64, 64, kernel_size=5, stride=1, padding=2, residual=True),
+            # 72 72
             BaseConv2D(64, 128, kernel_size=5, stride=2, padding=2),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
-            BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),# 72 72
-
-            BaseConv2D(128, 256, kernel_size=5, stride=2, padding=2),
-            BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
-            BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
-            BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
+            BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
+            BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
             # 24 24
             BaseConv2D(128, 256, kernel_size=5, stride=3, padding=2),
             BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
