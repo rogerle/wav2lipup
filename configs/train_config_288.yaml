@@ -49,8 +49,8 @@ train_config:
   init_learning_rate: 0.0001
   epochs: 1000000000
   num_works: 8
-  checkpoint_interval: 3000
-  eval_interval: 1000
+  checkpoint_interval: 10
+  eval_interval: 3
   save_optimizer_state: True
   syncnet_wt: 0.0
 

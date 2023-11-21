@@ -27,6 +27,8 @@ syncnet = SyncNetModel().to(device)
 for p in syncnet.parameters():
     p.requires_grad = False
 
+syncnet_wt = param.syncnet_wt
+disc_wt = param.disc_wt
 
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     print("Load checkpoint from: {}".format(checkpoint_path))
@@ -162,8 +164,6 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
     epoch = start_epoch
     numepochs = param.epochs
     checkpoint_interval = param.checkpoint_interval
-    syncnet_wt = param.syncnet_wt
-    disc_wt = param.disc_wt
     eval_interval = param.eval_interval
 
     with LogWriter(logdir="../logs/wav2lip/train") as writer:
