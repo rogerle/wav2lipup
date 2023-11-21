@@ -136,7 +136,7 @@ class SyncNetDataset(Dataset):
             orig_mel = torch.mean(orig_mel, dim=0)
             orig_mel = orig_mel.t().numpy()
             spec = self.__crop_audio_window(orig_mel.copy(), int(choosen))
-            spec = self.__normalization(spec)
+            #spec = self.__normalization(spec)
         except Exception as e:
             print("Mel trasfer execption:{}".format(e))
             spec = None
