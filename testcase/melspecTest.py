@@ -32,10 +32,10 @@ class MelSpecTest(unittest.TestCase):
         asis = 0.97  # filter coefficient.
         wavform = F.preemphasis(wavform,float(asis))
         specgram = torchaudio.transforms.MelSpectrogram(sample_rate=16000,
-                                                        n_fft=800,
+                                                        n_fft=850,
                                                         power=1.,
                                                         hop_length=200,
-                                                        win_length=800,
+                                                        win_length=850,
                                                         f_max=7600,
                                                         f_min=55,
                                                         norm='slaney',

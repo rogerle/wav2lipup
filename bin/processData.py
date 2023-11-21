@@ -47,7 +47,7 @@ def orignal_process(inputdir):
 
 def preProcess(inputdir, outputdir, preprocess_type):
     processer = PreProcessor()
-    if preprocess_type=='Time':
+    if preprocess_type == 'Time':
         processer.videosPreProcessByTime(s_time=3,
                                          input_dir=inputdir,
                                          output_dir=outputdir,
@@ -83,24 +83,25 @@ def train_file_write(inputdir):
             dirs = line.parts
             input_line = str(dirs[-2] + '/' + dirs[-1])
             result_list.append(input_line)
-    if len(result_list)<14:
-        test_result=eval_result=train_result=result_list
+    if len(result_list) < 14:
+        test_result = eval_result = train_result = result_list
     else:
-        train_result,test_result=train_test_split(result_list,test_size=0.15,random_state=42)
-        test_result,eval_result=train_test_split(test_result,test_size=0.5,random_state=42)
+        train_result, test_result = train_test_split(result_list, test_size=0.15, random_state=42)
+        test_result, eval_result = train_test_split(test_result, test_size=0.5, random_state=42)
 
-    for file_name,data_set in zip(("train.txt","test.txt","eval.txt"),(train_result,test_result,eval_result)):
-        with open(inputdir+'/'+file_name,'w',encoding='utf-8') as fi:
+    for file_name, data_set in zip(("train.txt", "test.txt", "eval.txt"), (train_result, test_result, eval_result)):
+        with open(inputdir + '/' + file_name, 'w', encoding='utf-8') as fi:
             fi.write("\n".join(data_set))
 
+
 def clear_data(inputdir):
-    for line in Path.glob(Path(inputdir), '*/*'):
+    for line in tqdm(Path.glob(Path(inputdir), '*/*')):
         if line.is_dir():
             imgs = []
             for img in line.glob('**/*.jpg'):
                 if img.is_file():
                     imgs.append(img)
-            if imgs is None or len(imgs)<25:
+            if imgs is None or len(imgs) < 25 or len(imgs) % 25 != 0:
                 shutil.rmtree(line)
 
 
