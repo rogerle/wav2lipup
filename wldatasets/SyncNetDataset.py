@@ -24,8 +24,9 @@ class SyncNetDataset(Dataset):
         self.img_size = kwargs['img_size']
 
     def __getitem__(self, idx):
-        img_dir = self.dirlist[idx]
         while 1:
+            idx = random.randint(0,len(self.dirlist)-1)
+            img_dir = self.dirlist[idx]
             image_names = self.__get_imgs(img_dir)
             if image_names is None or len(image_names)==0:
                 print('dir is {} {} is empty'.format(idx,img_dir))
@@ -132,7 +133,7 @@ class SyncNetDataset(Dataset):
                                                             normalized=self.hp.signal_normalization)
             orig_mel = specgram(wavform)
             orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=self.hp.min_level_db,
-                                         db_multiplier=self.hp.ref_level_db, top_db=80)
+                                         db_multiplier=self.hp.ref_level_db, top_db=100)
             orig_mel = torch.mean(orig_mel, dim=0)
             orig_mel = orig_mel.t().numpy()
             spec = self.__crop_audio_window(orig_mel.copy(), int(choosen))
