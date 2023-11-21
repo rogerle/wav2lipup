@@ -10,6 +10,7 @@
 """
 import os
 import argparse
+import shutil
 from pathlib import Path, PurePath
 
 from tqdm import tqdm
@@ -92,6 +93,16 @@ def train_file_write(inputdir):
         with open(inputdir+'/'+file_name,'w',encoding='utf-8') as fi:
             fi.write("\n".join(data_set))
 
+def clear_data(inputdir):
+    for line in Path.glob(Path(inputdir), '*/*'):
+        if line.is_dir():
+            imgs = []
+            for img in line.glob('**/*.jpg'):
+                if img.is_file():
+                    imgs.append(img)
+            if imgs is None or len(imgs)<25:
+                shutil.rmtree(line)
+
 
 def main():
     args = parse_args()
@@ -118,6 +129,7 @@ def main():
         process_data(preProcess_dir, process_dir, device)
     elif p_step == 3:
         print("produce the step {}".format(p_step))
+        clear_data(process_dir)
         train_file_write(process_dir)
     else:
         print('wrong step number, finished!')

@@ -90,7 +90,7 @@ class DataProcessor():
                         face = frame[int(y1):int(y2), int(x1):int(x2)]
                         faces['{}'.format(j)]=face
                         cv2.imwrite(file_name, face)"""
-            prog_bar.set_description('Extract Face Image：{}.jpg'.format(j))
+            prog_bar.set_description('Extract Face Image：{}/{}.jpg'.format(split_dir,j))
 
         #写入脸部文件“faces.bin",注意的是这个里面保存的是dict文件
         #with open(face_file,'wb') as f:

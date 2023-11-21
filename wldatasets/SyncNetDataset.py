@@ -25,16 +25,19 @@ class SyncNetDataset(Dataset):
 
     def __getitem__(self, idx):
         img_dir = self.dirlist[idx]
-        image_names = self.__get_imgs(img_dir)
-        sync_frames = int(len(image_names)/int(self.hp.fps)+int(self.hp.syncnet_T))
-        image_names = image_names[:-sync_frames]
-        if image_names is None or len(image_names)==0:
-            print('dir is {} {}'.format(idx,img_dir))
-        #取图片进行训练
         while 1:
+            image_names = self.__get_imgs(img_dir)
+            if image_names is None or len(image_names)==0:
+                print('dir is {} {} is empty'.format(idx,img_dir))
+                continue
+        #取图片进行训练
+
             img_name,choosen,y = self.__get_choosen(image_names)
             window = self.__get_window(choosen,img_dir)
             if window is None or len(window) < 5:
+                continue
+
+            if window is None:
                 continue
 
             x = np.concatenate(window, axis=2) / 255.
@@ -78,11 +81,13 @@ class SyncNetDataset(Dataset):
         window_frames = []
         for frame_id in range(start_id, seek_id):
             frame = vidPath + '/{}.jpg'.format(frame_id)
-            img = cv2.imread(frame)
+            if Path(frame).exists() is False:
+                return None
             try:
+                img = cv2.imread(frame)
                 img = cv2.resize(img, (self.img_size, self.img_size))
             except Exception as e:
-                print('img resize exception:{}'.format(e))
+                return None
             window_frames.append(img)
         return window_frames
 
