@@ -27,14 +27,10 @@ class SyncNetModel(nn.Module):
             #12  12
             BaseConv2D(256, 512, kernel_size=3, stride=2, padding=1),
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
-            # 6  6
-            BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),
-            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
-            # 3  3
-            BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),
-            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
-            # 1 1
-            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0),
+
+            BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),# 6  6
+            BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),# 3  3
+            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0),# 1 1
             BaseConv2D(512, 512, kernel_size=1, stride=1, padding=0),
 
         )
