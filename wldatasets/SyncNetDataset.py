@@ -25,7 +25,7 @@ class SyncNetDataset(Dataset):
 
     def __getitem__(self, idx):
         img_dir = self.dirlist[idx]
-        print('process imgs dir is {}'.format(img_dir))
+        #print('process imgs dir is {}'.format(img_dir))
         while 1:
 
             image_names = self.__get_imgs(img_dir)
