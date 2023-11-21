@@ -19,9 +19,15 @@ train_config:
   # Mel and Linear spectrograms normalization/scaling and clipping
   signal_normalization: True
   allow_clipping_in_normalization: True
-  symmetric_mels: True
+
   # Whether to scale the data to be symmetric around 0. (Also multiplies the output range by 2,
   # faster and cleaner convergence
+
+  symmetric_mels: True
+
+  # max absolute value of data. If symmetric, data will be [-max, max] else [0, max] (Must not
+  # be too big to avoid gradient explosion,
+  # not too small for fast convergence)
   max_abs_value: 4.
 
   preemphasize: True # whether to apply filter
@@ -50,10 +56,10 @@ train_config:
 
   #####################################sycnet parameters##########################################
 
-  syncnet_batch_size: 64
-  syncnet_learning_rate: 0.00001
-  syncnet_checkpoint_interval: 3000
-  syncnet_eval_interval: 1000
+  syncnet_batch_size: 16
+  syncnet_learning_rate: 0.0001
+  syncnet_checkpoint_interval: 10
+  syncnet_eval_interval: 10
   #####################################Disc parameters##########################################
   disc_wt: 0.07
   disc_initial_learning_rate: 0.0001
