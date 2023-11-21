@@ -13,7 +13,7 @@ from scipy import signal
 
 class MelSpecTest(unittest.TestCase):
     def testMelShow(self):
-        wavfile = "../data/test_data/pr_data/000001/000001_00050_00058/audio.wav"
+        wavfile = "../data/test_data/pr_data/000001/000001_00054_00060/audio.wav"
         wavform, sf = torchaudio.load(wavfile)
         spec = T.Spectrogram(n_fft=800,hop_length=200,win_length=800,power=1.0)(wavform)
         spec = T.AmplitudeToDB(stype='magnitude',
@@ -45,20 +45,21 @@ class MelSpecTest(unittest.TestCase):
                                                         mel_scale='htk'
                                                         )
         orig_mel = specgram(wavform)
-        orig_mel = T.AmplitudeToDB(stype='magnitude',top_db=80)(orig_mel)
-        mel =orig_mel[0].t().numpy().copy()
-
+        orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=-100,
+                                     db_multiplier=20, top_db=80)
+        orig_mel = torch.mean(orig_mel, dim=0)
+        mel = orig_mel.t().numpy().copy()
 
         # num_frames = (T x hop_size * fps) / sample_rate
         np.clip((2 * 4) * (
                     (mel - (-100)) / (-(-100))) - 4,
                 -4, 4)
-        start_frame_num = 190
+        """start_frame_num = 10
 
         start_idx = int(80. * (start_frame_num / float(25)))  # 80.乘出来刚好是frame的长度
 
         end_idx = start_idx + 16
-        mel = mel[start_idx:end_idx,:]
+        mel = mel[start_idx:end_idx,:]"""
 
 
         fig, axs = plt.subplots(3, 1)

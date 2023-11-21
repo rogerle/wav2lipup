@@ -131,8 +131,10 @@ class SyncNetDataset(Dataset):
                                                             n_mels=self.hp.num_mels,
                                                             normalized=self.hp.signal_normalization)
             orig_mel = specgram(wavform)
-            orig_mel = T.AmplitudeToDB(stype='magnitude',top_db=80)(orig_mel)
-            orig_mel = orig_mel[0].t().numpy()
+            orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=self.hp.min_level_db,
+                                         db_multiplier=self.hp.ref_level_db, top_db=80)
+            orig_mel = torch.mean(orig_mel, dim=0)
+            orig_mel = orig_mel.t().numpy()
             spec = self.__crop_audio_window(orig_mel.copy(), int(choosen))
             spec = self.__normalization(spec)
         except Exception as e:
