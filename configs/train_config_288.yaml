@@ -10,18 +10,24 @@ train_config:
   # For 16000Hz, 200 = 12.5 ms (0.0125 * sample_rate)
   # For 16000Hz, 800 = 50 ms (If None, win_size = n_fft) (0.05 * sample_rate)
   # 16000Hz (corresponding to librispeech) (sox --i <filename>)
-  n_fft: 800
+  n_fft: 850
   hop_size: 200
-  win_size: 800
+  win_size: 850
   sample_rate: 16000
   # Can replace hop_size parameter. (Recommended: 12.5)
   frame_shift_ms: None
   # Mel and Linear spectrograms normalization/scaling and clipping
   signal_normalization: True
   allow_clipping_in_normalization: True
-  symmetric_mels: True
+
   # Whether to scale the data to be symmetric around 0. (Also multiplies the output range by 2,
   # faster and cleaner convergence
+
+  symmetric_mels: True
+
+  # max absolute value of data. If symmetric, data will be [-max, max] else [0, max] (Must not
+  # be too big to avoid gradient explosion,
+  # not too small for fast convergence)
   max_abs_value: 4.
 
   preemphasize: True # whether to apply filter
@@ -43,16 +49,16 @@ train_config:
   init_learning_rate: 0.0001
   epochs: 1000000000
   num_works: 8
-  checkpoint_interval: 10
-  eval_interval: 3
+  checkpoint_interval: 1000
+  eval_interval: 1000
   save_optimizer_state: True
   syncnet_wt: 0.0
 
   #####################################sycnet parameters##########################################
 
   syncnet_batch_size: 64
-  syncnet_learning_rate: 0.00001
-  syncnet_checkpoint_interval: 3000
+  syncnet_learning_rate: 0.0001
+  syncnet_checkpoint_interval: 1000
   syncnet_eval_interval: 1000
   #####################################Disc parameters##########################################
   disc_wt: 0.07

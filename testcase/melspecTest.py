@@ -13,7 +13,7 @@ from scipy import signal
 
 class MelSpecTest(unittest.TestCase):
     def testMelShow(self):
-        wavfile = "../data/test_data/pr_data/000001/000001_00054_00060/audio.wav"
+        wavfile = "../data/test_data/pr_data/000001/000001_00058_00063/audio.wav"
         wavform, sf = torchaudio.load(wavfile)
         spec = T.Spectrogram(n_fft=800,hop_length=200,win_length=800,power=1.0)(wavform)
         spec = T.AmplitudeToDB(stype='magnitude',
@@ -32,10 +32,10 @@ class MelSpecTest(unittest.TestCase):
         asis = 0.97  # filter coefficient.
         wavform = F.preemphasis(wavform,float(asis))
         specgram = torchaudio.transforms.MelSpectrogram(sample_rate=16000,
-                                                        n_fft=800,
+                                                        n_fft=850,
                                                         power=1.,
                                                         hop_length=200,
-                                                        win_length=800,
+                                                        win_length=850,
                                                         f_max=7600,
                                                         f_min=55,
                                                         norm='slaney',
@@ -50,22 +50,22 @@ class MelSpecTest(unittest.TestCase):
         orig_mel = torch.mean(orig_mel, dim=0)
         mel = orig_mel.t().numpy().copy()
 
-        # num_frames = (T x hop_size * fps) / sample_rate
-        np.clip((2 * 4) * (
-                    (mel - (-100)) / (-(-100))) - 4,
-                -4, 4)
-        """start_frame_num = 10
+        #num_frames = (T x hop_size * fps) / sample_rate
+        #np.clip((2 * 4) * (
+        #            (mel - (-100)) / (-(-100))) - 4,
+       #         -4, 4)
+        start_frame_num = 48
 
         start_idx = int(80. * (start_frame_num / float(25)))  # 80.乘出来刚好是frame的长度
 
         end_idx = start_idx + 16
-        mel = mel[start_idx:end_idx,:]"""
+        mel = mel[start_idx:end_idx,:]
 
 
         fig, axs = plt.subplots(3, 1)
         self.plot_wavform(wavform,sf,title='Original wavform',ax=axs[0])
         self.plot_spectrogram(spec[0],title="spectrogram",ax=axs[1])
-        self.plot_spectrogram(mel, title="Mel-spectrogram",ax=axs[2])
+        self.plot_spectrogram(np.transpose(mel, (1, 0)), title="Mel-spectrogram",ax=axs[2])
         fig.tight_layout()
 
 
