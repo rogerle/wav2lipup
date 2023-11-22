@@ -15,7 +15,8 @@ import argparse
 from visualdl import LogWriter
 
 param = ParamsUtil()
-logloss = nn.BCELoss()
+#logloss = nn.BCELoss()
+logloss = nn.BCEWithLogitsLoss()
 
 
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
