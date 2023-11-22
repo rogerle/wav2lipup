@@ -24,9 +24,11 @@ class SyncNetDataset(Dataset):
         self.img_size = kwargs['img_size']
 
     def __getitem__(self, idx):
-        img_dir = self.dirlist[idx]
+
         #print('process imgs dir is {}'.format(img_dir))
         while 1:
+            idx=random.randint(0,len(self.dirlist)-1)
+            img_dir = self.dirlist[idx]
 
             image_names = self.__get_imgs(img_dir)
             if image_names is None or len(image_names)==0:
