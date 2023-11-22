@@ -15,8 +15,8 @@ import argparse
 from visualdl import LogWriter
 
 param = ParamsUtil()
-logloss = nn.BCELoss()
-#logloss = nn.BCEWithLogitsLoss()
+#logloss = nn.BCELoss()
+logloss = nn.BCEWithLogitsLoss()
 
 
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
@@ -151,8 +151,8 @@ def main():
     print("SyncNet Model's Total trainable params {}".format(
         sum(p.numel() for p in model.parameters() if p.requires_grad)))
 
-   # optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad], lr=param.syncnet_learning_rate)
-    optimizer = optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=param.syncnet_learning_rate)
+    optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad], lr=param.syncnet_learning_rate)
+    # optimizer = optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=param.syncnet_learning_rate)
 
     start_step = 0
     start_epoch = 0
