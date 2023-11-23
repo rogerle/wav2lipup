@@ -41,7 +41,7 @@ class DataProcessor():
     def __extract_audio(self, vfile, split_dir):
         audio_clip = AudioFileClip(str(vfile))
         audiofile = split_dir + '/audio.wav'
-        audio_clip.write_audiofile(audiofile,logger=None)
+        audio_clip.write_audiofile(audiofile, logger=None)
 
         audio_meta_f = split_dir + '/audio_meta.info'
 
@@ -60,10 +60,10 @@ class DataProcessor():
 
     def __extract_face_img(self, frames, split_dir):
         prog_bar = tqdm(enumerate(frames), total=len(frames), leave=False)
-        #faces={}
-        #face_file = split_dir+'/faces.pkl'
+        # faces={}
+        # face_file = split_dir+'/faces.pkl'
         for j, frame in prog_bar:
-            j = j+1
+            j = j + 1
             face_result = self.face_detector.faceDetec(frame)
             scores = face_result['scores']
             boxes = face_result['boxes']
@@ -76,8 +76,8 @@ class DataProcessor():
                 x1, y1, x2, y2 = box
                 file_name = split_dir + '/{}.jpg'.format(j)
                 face = frame[int(y1):int(y2), int(x1):int(x2)]
-                #faces['{}'.format(j)] = face
-                if face is None or len(face)<=0:
+                # faces['{}'.format(j)] = face
+                if face.size() == 0:
                     continue
                 cv2.imwrite(file_name, face)
                 """max_score = scores[0]
@@ -90,11 +90,11 @@ class DataProcessor():
                         face = frame[int(y1):int(y2), int(x1):int(x2)]
                         faces['{}'.format(j)]=face
                         cv2.imwrite(file_name, face)"""
-            prog_bar.set_description('Extract Face Image：{}/{}.jpg'.format(split_dir,j))
+            prog_bar.set_description('Extract Face Image：{}/{}.jpg'.format(split_dir, j))
 
-        #写入脸部文件“faces.bin",注意的是这个里面保存的是dict文件
-        #with open(face_file,'wb') as f:
-            #pickle.dump(faces,f)
+        # 写入脸部文件“faces.bin",注意的是这个里面保存的是dict文件
+        # with open(face_file,'wb') as f:
+        # pickle.dump(faces,f)
 
     def __get_split_path(self, vfile, processed_data_root):
         vf = Path(vfile)
