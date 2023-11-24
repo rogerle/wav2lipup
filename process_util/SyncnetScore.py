@@ -8,6 +8,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F2
 import torchaudio.functional as F
+from tqdm import tqdm
 
 from models.SyncNetModel import SyncNetModel
 
@@ -51,9 +52,10 @@ class SyncnetScore():
             p.requires_grad = False
         syncnet = self.__load_checkpoint(syncnet)
         Path(root+'/score.txt').write_text('')
-        for dir in dir_list:
+        prog_bar = tqdm(enumerate(dir_list), total=len(dir_list), leave=False)
+        for i,dir in prog_bar:
             score = self.__score(dir, syncnet)
-            print("{}: {}".format(dir, score))
+            prog_bar.set_description('score the sync video:{}/{}'.format(dir,score))
             if score > 0.693:
                 with open(root + '/score.txt', 'a') as f:
                     f.write("{}:{}\n".format(dir, score))
