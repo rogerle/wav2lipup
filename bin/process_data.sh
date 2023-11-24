@@ -32,3 +32,9 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
                          --process_step=3 \
                          --gpu_num=1 || exit -1
 fi
+
+if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
+   python processData.py --data_root=../data \
+                         --process_step=4 \
+                         --gpu_num=1 || exit -1
+fi

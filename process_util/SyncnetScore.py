@@ -56,6 +56,8 @@ class SyncnetScore():
         prog_bar = tqdm(enumerate(dir_list), total=len(dir_list), leave=False)
         for i,dir in prog_bar:
             score = self.__score(dir, syncnet)
+            if score is None:
+                continue
             prog_bar.set_description('score the sync video:{}/{}'.format(dir,score))
             parts = Path(dir).parts
             if score > 0.693:
@@ -69,15 +71,18 @@ class SyncnetScore():
         wavfile = dir + '/audio.wav'
         for file in Path.glob(Path(dir), '**/*.jpg'):
             if file.is_file():
-                files.append(file)
-        files.sort()
+                img = file.stem
+                files.append(img)
+        files.sort(key=int)
         syncnet.eval()
         logloss = nn.BCELoss()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         losses = []
-        for i in range(1, len(files) - 6):
+        for i, img in enumerate(files):
+            if i>len(files)-5 :
+                return None
             window = []
-            for idx in range(i, i + 5):
+            for idx in range(int(img), int(img + 5)):
                 img_name = dir + '/' + '{}.jpg'.format(idx)
                 img = cv2.imread(img_name)
                 try:
