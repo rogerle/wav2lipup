@@ -72,7 +72,7 @@ class SyncnetScore():
         for file in Path.glob(Path(dir), '**/*.jpg'):
             if file.is_file():
                 img = file.stem
-                files.append(img)
+                files.append(int(img))
         files.sort(key=int)
         syncnet.eval()
         logloss = nn.BCELoss()
@@ -82,14 +82,14 @@ class SyncnetScore():
             if i>len(files)-5 :
                 break
             window = []
-            for idx in range(int(img), int(img) + 5):
+            for idx in range(img, img + 5):
                 img_name = dir + '/' + '{}.jpg'.format(idx)
-                img = cv2.imread(img_name)
+                img_f = cv2.imread(img_name)
                 try:
-                    img = cv2.resize(img, (288, 288))
+                    img_f = cv2.resize(img_f, (288, 288))
                 except Exception as e:
                     print('image resize error:{}'.format(e))
-                window.append(img)
+                window.append(img_f)
 
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
@@ -130,7 +130,7 @@ class SyncnetScore():
             d = F2.cosine_similarity(a, v)
             y = torch.ones(1).float()
             y=y.to(device)
-            loss = logloss(d, y)
+            loss = logloss(d.unsqueeze(1), y.unsqueeze(1))
             losses.append(loss)
         return sum(losses) / len(losses)
 
