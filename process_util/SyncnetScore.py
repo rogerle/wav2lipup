@@ -80,7 +80,7 @@ class SyncnetScore():
         losses = []
         for i, img in enumerate(files):
             if i>len(files)-5 :
-                return None
+                break
             window = []
             for idx in range(int(img), int(img) + 5):
                 img_name = dir + '/' + '{}.jpg'.format(idx)
