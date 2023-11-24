@@ -41,9 +41,6 @@ class SyncNetDataset(Dataset):
             if window is None or len(window) < 5:
                 continue
 
-            if window is None:
-                continue
-
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
             x = x[:, x.shape[1] // 2:]
@@ -112,10 +109,10 @@ class SyncNetDataset(Dataset):
             wrong_img_name = random.choice(image_names)
 
         if random.choice([True, False]):
-            y = torch.ones(1).float()
+            y = torch.ones(1,dtype=torch.float)
             choosen = img_name
         else:
-            y = torch.zeros(1).float()
+            y = torch.zeros(1,dtype=torch.float)
             choosen = wrong_img_name
         return img_name,choosen,y
 
