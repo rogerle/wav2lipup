@@ -116,7 +116,7 @@ class SyncnetScore():
                 orig_mel = orig_mel.t().numpy()
             except Exception as e:
                 continue
-            mel = self.__crop_audio_window(orig_mel.copy(), i)
+            mel = self.__crop_audio_window(orig_mel.copy(), img)
 
             mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
             x = x.unsqueeze(0)
