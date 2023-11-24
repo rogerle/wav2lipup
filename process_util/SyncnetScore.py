@@ -60,7 +60,7 @@ class SyncnetScore():
             parts = Path(dir).parts
             if score > 0.693:
                 with open(root + '/score.txt', 'a') as f:
-                    f.write("{}:{}\n".format(parts[-2]+'/'+parts[-1], score))
+                    f.write("{}/{}\n".format(parts[-2],parts[-1]))
 
 
 
