@@ -53,8 +53,9 @@ class SyncnetScore():
         for dir in dir_list:
             score = self.__score(dir, syncnet)
             print("{}: {}".format(dir, score))
-            with open(root + '/score.txt', 'a') as f:
-                f.write("{}:{}\n".format(dir, score))
+            if score > 0.693:
+                with open(root + '/score.txt', 'a') as f:
+                    f.write("{}:{}\n".format(dir, score))
 
     def __score(self, dir, syncnet):
         files = []
