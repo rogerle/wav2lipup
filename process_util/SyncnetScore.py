@@ -3,10 +3,11 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import torch
 import torchaudio
+import torch
 from torch import nn
-from torch.nn import functional as F
+from torch.nn import functional as F2
+import torchaudio.functional as F
 
 from models.SyncNetModel import SyncNetModel
 
@@ -98,8 +99,8 @@ class SyncnetScore():
                                                                 n_mels=80,
                                                                 normalized=True)
                 orig_mel = specgram(wavform)
-                orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=self.hp.min_level_db,
-                                             db_multiplier=self.hp.ref_level_db, top_db=100)
+                orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=-100,
+                                             db_multiplier=20, top_db=100)
                 orig_mel = torch.mean(orig_mel, dim=0)
                 orig_mel = orig_mel.t().numpy()
             except Exception as e:
@@ -115,11 +116,8 @@ class SyncnetScore():
 
             a, v = syncnet(mel, x)
 
-            d = F.cosine_similarity(a, v)
-            if random.choice([True, False]):
-                y = torch.ones(1).float()
-            else:
-                y = torch.zeros(1).float()
+            d = F2.cosine_similarity(a, v)
+            y = torch.ones(1).float()
             y=y.to(device)
             loss = logloss(d, y)
             losses.append(loss)
