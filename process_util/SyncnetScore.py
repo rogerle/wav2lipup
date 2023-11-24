@@ -52,13 +52,17 @@ class SyncnetScore():
             p.requires_grad = False
         syncnet = self.__load_checkpoint(syncnet)
         Path(root+'/score.txt').write_text('')
+
         prog_bar = tqdm(enumerate(dir_list), total=len(dir_list), leave=False)
         for i,dir in prog_bar:
             score = self.__score(dir, syncnet)
             prog_bar.set_description('score the sync video:{}/{}'.format(dir,score))
+            parts = Path(dir).parts
             if score > 0.693:
                 with open(root + '/score.txt', 'a') as f:
-                    f.write("{}:{}\n".format(dir, score))
+                    f.write("{}:{}\n".format(parts[-2]+'/'+parts[-1], score))
+
+
 
     def __score(self, dir, syncnet):
         files = []

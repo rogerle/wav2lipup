@@ -105,6 +105,28 @@ def clear_data(inputdir):
                 print('delete empty or bad video!{}'.format(line))
                 shutil.rmtree(line)
 
+def sync_data(inputdir):
+    train_txt = inputdir+'/train.txt'
+    exclude_txt =inputdir+'/score.txt'
+    train_list = get_list(train_txt)
+    exclude_list= get_list(exclude_txt)
+    for item in exclude_list:
+        train_list.remove(item)
+
+    for file_name,data_set in zip(train_txt,train_list):
+        with open(file_name,'w',encoding='utf-8') as fw:
+            fw.write("\n".join(data_set))
+
+def get_list(inputText):
+    list=[]
+    with open(inputText, 'r') as f:
+        for line in f:
+            line = line.strip()
+            list.append(line)
+    return list
+
+
+
 
 def main():
     args = parse_args()
@@ -133,6 +155,9 @@ def main():
         print("produce the step {}".format(p_step))
         clear_data(process_dir)
         train_file_write(process_dir)
+    elif p_step == 4:
+        print("produce the step {}".format(p_step))
+        sync_data(process_dir)
     else:
         print('wrong step number, finished!')
 
