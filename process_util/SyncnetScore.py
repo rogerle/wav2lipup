@@ -86,14 +86,21 @@ class SyncnetScore():
 
             try:
                 wavform, sf = torchaudio.load(wavfile)
+
+                wavform = F.preemphasis(wavform, 0.97)
                 specgram = torchaudio.transforms.MelSpectrogram(sample_rate=16000,
                                                                 n_fft=800,
+                                                                power=1.,
                                                                 hop_length=200,
                                                                 win_length=800,
                                                                 f_min=55,
                                                                 f_max=7600,
-                                                                n_mels=80)
-                orig_mel = specgram(wavform)[0]
+                                                                n_mels=80,
+                                                                normalized=True)
+                orig_mel = specgram(wavform)
+                orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=self.hp.min_level_db,
+                                             db_multiplier=self.hp.ref_level_db, top_db=100)
+                orig_mel = torch.mean(orig_mel, dim=0)
                 orig_mel = orig_mel.t().numpy()
             except Exception as e:
                 continue
