@@ -82,7 +82,7 @@ class SyncnetScore():
             if i>len(files)-5 :
                 return None
             window = []
-            for idx in range(int(img), int(img + 5)):
+            for idx in range(int(img), int(img) + 5):
                 img_name = dir + '/' + '{}.jpg'.format(idx)
                 img = cv2.imread(img_name)
                 try:
