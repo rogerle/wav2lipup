@@ -78,6 +78,8 @@ class SyncnetScore():
         syncnet.eval()
         logloss = nn.BCELoss()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        times = 0
+        losses = []
         while 1:
             img = random.choice(files)
             if img > len(files)-5 :
@@ -136,8 +138,10 @@ class SyncnetScore():
             y = torch.ones(1).float()
             y=y.to(device)
             loss = logloss(d.unsqueeze(1), y.unsqueeze(1))
-
-            return loss
+            times += 1
+            losses.append(loss.item())
+            if times > 5:
+                return sum(losses)/len(losses)
 
     def __crop_audio_window(self, spec, start_frame):
         start_frame_num = start_frame
