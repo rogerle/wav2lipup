@@ -18,10 +18,11 @@ from models.SyncNetModel import SyncNetModel
 
 
 class SyncnetScore():
-    def __init__(self, data_root, default_threshold, checkpoint_pth):
+    def __init__(self, data_root, default_threshold, checkpoint_pth,filter_score):
         self.data_root = data_root
         self.dt = default_threshold
         self.checkpoint_pth = checkpoint_pth
+        self.filter_score= float(filter_score)
 
     def __load_checkpoint(self, model):
         if torch.cuda.is_available():
@@ -60,7 +61,7 @@ class SyncnetScore():
                 continue
             prog_bar.set_description('score the sync video:{}/{}'.format(dir,score))
             parts = Path(dir).parts
-            if score > 0.693:
+            if score > self.filter_score:
                 with open(root + '/score.txt', 'a') as f:
                     f.write("{}/{}\n".format(parts[-2],parts[-1]))
 
@@ -77,10 +78,10 @@ class SyncnetScore():
         syncnet.eval()
         logloss = nn.BCELoss()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        losses = []
-        for i, img in enumerate(files):
-            if i>len(files)-5 :
-                break
+        while 1:
+            img = random.choice(files)
+            if img > len(files)-5 :
+                continue
             window = []
             for idx in range(img, img + 5):
                 img_name = dir + '/' + '{}.jpg'.format(idx)
@@ -115,8 +116,12 @@ class SyncnetScore():
                 orig_mel = torch.mean(orig_mel, dim=0)
                 orig_mel = orig_mel.t().numpy()
             except Exception as e:
+                print("mel error:".format(e))
                 continue
             mel = self.__crop_audio_window(orig_mel.copy(), img)
+
+            if mel.shape(0) != 16:
+                continue
 
             mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
             x = x.unsqueeze(0)
@@ -131,8 +136,8 @@ class SyncnetScore():
             y = torch.ones(1).float()
             y=y.to(device)
             loss = logloss(d.unsqueeze(1), y.unsqueeze(1))
-            losses.append(loss)
-        return sum(losses) / len(losses)
+
+            return loss
 
     def __crop_audio_window(self, spec, start_frame):
         start_frame_num = start_frame

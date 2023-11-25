@@ -20,8 +20,9 @@ def main():
     args = parse_args()
     data_root = args.data_root
     checkpoint = args.checkpoint_path
+    filter_score = args.filter_score
 
-    score_tools= SyncnetScore(data_root,8,checkpoint)
+    score_tools= SyncnetScore(data_root,8,checkpoint,filter_score)
     score_tools.score_video()
 
 
@@ -34,6 +35,7 @@ def parse_args():
         description="score for the video")
     parser.add_argument("--data_root", help='Root folder of the preprocessed dataset', required=True, type=str)
     parser.add_argument('--checkpoint_path', help='Load he pre-trained ', required=True,)
+    parser.add_argument('--filter_score', help='the score to filter bad video ', required=True, default=0.693)
     args = parser.parse_args()
 
     return args
