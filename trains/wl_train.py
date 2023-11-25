@@ -183,7 +183,6 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
 
                 ### Train generator now. Remove ALL grads.
                 optimizer.zero_grad()
-                disc_optimizer.zero_grad()
 
                 g = model(indiv_mels, x)
 
