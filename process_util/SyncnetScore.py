@@ -120,7 +120,7 @@ class SyncnetScore():
                 continue
             mel = self.__crop_audio_window(orig_mel.copy(), img)
 
-            if mel.shape(0) != 16:
+            if mel.shape[0] != 16:
                 continue
 
             mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
