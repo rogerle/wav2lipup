@@ -107,15 +107,27 @@ def clear_data(inputdir):
 
 def sync_data(inputdir):
     train_txt = inputdir+'/train.txt'
+    test_txt = inputdir+'/test.txt'
+    eval_txt = inputdir+'eval.txt'
     exclude_txt =inputdir+'/score.txt'
     train_list = get_list(train_txt)
+    test_list = get_list(test_txt)
+    eval_list = get_list(eval_txt)
     exclude_list= get_list(exclude_txt)
-    for item in exclude_list:
-        if item in train_list:
-            train_list.remove(item)
+    train_list=clear_badv(train_list,exclude_list)
+    test_list=clear_badv(test_list,exclude_list)
+    eval_list=clear_badv(eval_list,exclude_list)
+
+
 
     with open(inputdir+'/train.txt','w',encoding='utf-8') as fw:
         fw.write("\n".join(train_list))
+
+    with open(inputdir+'/test.txt','w',encoding='utf-8') as fw:
+        fw.write("\n".join(test_list))
+
+    with open(inputdir+'/eval.txt','w',encoding='utf-8') as fw:
+        fw.write("\n".join(eval_list))
 
 def get_list(inputText):
     list=[]
@@ -124,6 +136,13 @@ def get_list(inputText):
             line = line.strip()
             list.append(line)
     return list
+
+def clear_badv(all_list,exclude_list):
+    for item in exclude_list:
+        if item in all_list:
+            all_list.remove(item)
+
+    return all_list
 
 
 
