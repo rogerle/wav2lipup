@@ -11,25 +11,32 @@ class SyncNetModel(nn.Module):
 
         self.face_encoder = nn.Sequential(
             BaseConv2D(15, 32, kernel_size=(7, 7), stride=1, padding=3),
-            BaseConv2D(32, 32, kernel_size=5, stride=1, padding=1),
+            BaseConv2D(32, 32, kernel_size=3, stride=1, padding=1, residual=True),
+            BaseConv2D(32, 32, kernel_size=3, stride=1, padding=1, residual=True),
 
             BaseConv2D(32, 64, kernel_size=5, stride=(1, 2), padding=1), #140 142
             BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
+            BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True),
 
             BaseConv2D(64, 128, kernel_size=3, stride=2, padding=1), #7072
+            BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True),
 
             BaseConv2D(128, 256, kernel_size=3, stride=2, padding=1), #35,36
             BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
+            BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
 
             BaseConv2D(256, 512, kernel_size=3, stride=2, padding=1),  #18 18
+            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
 
             BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),#9
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
+            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
 
             BaseConv2D(512, 512, kernel_size=3, stride=2, padding=1),#5
+            BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True),
 
             BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0),#3
