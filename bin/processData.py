@@ -114,9 +114,8 @@ def sync_data(inputdir):
         if item in train_list:
             train_list.remove(item)
 
-    for file_name,data_set in zip(('train.txt'),(train_list)):
-        with open(inputdir+'/'+file_name,'w',encoding='utf-8') as fw:
-            fw.write("\n".join(data_set))
+    with open(inputdir+'/train.txt','w',encoding='utf-8') as fw:
+        fw.write("\n".join(train_list))
 
 def get_list(inputText):
     list=[]
