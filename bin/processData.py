@@ -108,7 +108,7 @@ def clear_data(inputdir):
 def sync_data(inputdir):
     train_txt = inputdir+'/train.txt'
     test_txt = inputdir+'/test.txt'
-    eval_txt = inputdir+'eval.txt'
+    eval_txt = inputdir+'/eval.txt'
     exclude_txt =inputdir+'/score.txt'
     train_list = get_list(train_txt)
     test_list = get_list(test_txt)
