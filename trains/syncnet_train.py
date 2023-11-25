@@ -130,21 +130,19 @@ def main():
 
     checkpoint_dir = args.checkpoint_dir
     checkpoint_path = args.checkpoint_path
+    train_type = args.train_type
 
     Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
 
-    train_dataset = SyncNetDataset(args.data_root, run_type='train', img_size=288)
+    train_dataset = SyncNetDataset(args.data_root, run_type=train_type, img_size=288)
     val_dataset = SyncNetDataset(args.data_root, run_type='eval', img_size=288)
 
     train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
-                                  num_workers=param.num_works)
-    val_dataloader = DataLoader(val_dataset, batch_size=8,
-                                num_workers=8, drop_last=True)
+                                  num_workers=param.num_works,drop_last=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size,
+                                num_workers=param.num_works)
 
-    if args.gpunum > 0:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    else:
-        device = torch.device('cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = SyncNetModel().to(device)
 
@@ -172,7 +170,7 @@ def parse_args():
     parser.add_argument("--checkpoint_path", help='Resume from this checkpoint', default=None, type=str)
     parser.add_argument('--config_file', help='The train config file', default='../configs/train_config_288.yaml',
                         required=True, type=str)
-    parser.add_argument('--gpunum', help='Resume qulity disc from this checkpoint', default=0, type=int)
+    parser.add_argument('--train_type', help='Resume qulity disc from this checkpoint', default='train', type=str)
 
     args = parser.parse_args()
 
