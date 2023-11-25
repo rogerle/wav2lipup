@@ -111,7 +111,8 @@ def sync_data(inputdir):
     train_list = get_list(train_txt)
     exclude_list= get_list(exclude_txt)
     for item in exclude_list:
-        train_list.remove(item)
+        if item in train_list:
+            train_list.remove(item)
 
     for file_name,data_set in zip(train_txt,train_list):
         with open(file_name,'w',encoding='utf-8') as fw:
