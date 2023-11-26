@@ -272,8 +272,9 @@ def main():
     checkpoint_path = args.checkpoint_path
     disc_checkpoint_path = args.disc_checkpoint_path
     syncnet_checkpoint_path = args.syncnet_checkpoint_path
+    train_type = args.train_type
 
-    train_dataset = FaceDataset(args.data_root, run_type='train', img_size=param.img_size)
+    train_dataset = FaceDataset(args.data_root, run_type=train_type, img_size=param.img_size)
     test_dataset = FaceDataset(args.data_root, run_type='eval', img_size=param.img_size)
 
     train_data_loader = DataLoader(train_dataset, batch_size=param.batch_size, shuffle=True,
@@ -291,10 +292,10 @@ def main():
     print('total DISC trainable params {}'.format(sum(p.numel() for p in disc.parameters() if p.requires_grad)))
 
     optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad],
-                           lr=param.init_learning_rate, betas=(0.5, 0.999))
+                           lr=float(param.init_learning_rate), betas=(0.5, 0.999))
 
     disc_optimizer = optim.Adam([p for p in disc.parameters() if p.requires_grad],
-                                lr=param.disc_initial_learning_rate, betas=(0.5, 0.999))
+                                lr=float(param.disc_initial_learning_rate), betas=(0.5, 0.999))
     start_step = 0
     start_epoch = 0
 
@@ -326,7 +327,8 @@ def parse_args():
     parser.add_argument('--checkpoint', help='Resume generator from this checkpoint', default=None, type=str)
     parser.add_argument('--disc_checkpoint_path', help='Resume qulity disc from this checkpoint', default=None,
                         type=str)
-
+    parser.add_argument('--train_type', help='the train tyep train or test', default='train',
+                        type=str)
     args = parser.parse_args()
     return args
 
