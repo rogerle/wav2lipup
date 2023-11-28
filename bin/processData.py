@@ -65,6 +65,7 @@ def process_data(inputdir, outputdir, device):
             files.append(f.as_posix())
     files.sort()
     total_files = len(files)
+    print('total files to processed:{}'.format(total_files))
 
     dones = get_processed_data(outputdir)
     done_files=[]
@@ -83,7 +84,7 @@ def process_data(inputdir, outputdir, device):
             files.remove(item)
             done_bar.set_description('produce break point!{}'.format(item))
 
-    prog_bar = tqdm(enumerate(files), total=total_files, leave=False)
+    prog_bar = tqdm(enumerate(files), total=len(files), leave=False)
     for i, fp in prog_bar:
         prog_bar.set_description('Extract face frame:{}/{}'.format(i, total_files))
         dataProcessor.processVideoFile(str(fp), device=device, processed_data_root=outputdir)
