@@ -69,6 +69,7 @@ def process_data(inputdir, outputdir, device):
     dones = get_processed_data(outputdir)
     done_files=[]
     if dones is not None and len(dones) > 0:
+        print('break point continue!')
         for done_file in dones:
             d_root = Path(done_file).parts[-2]
             d_name = Path(done_file).parts[-1]
@@ -77,9 +78,10 @@ def process_data(inputdir, outputdir, device):
             d_f = d_s[-2]+'_'+d_s[-1]+".mp4"
             d_full=inputdir+'/'+d_root+'/'+d_d+'/'+d_f
             done_files.append(d_full)
-
+        done_bar = tqdm(enumerate(done_files),total=len(done_files),leave=False)
         for item in done_files:
             files.remove(item)
+            done_bar.set_description('produce break point!')
 
     prog_bar = tqdm(enumerate(files), total=total_files, leave=False)
     for i, fp in prog_bar:
