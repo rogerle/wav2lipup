@@ -140,7 +140,7 @@ class SyncnetScore():
             loss = logloss(d.unsqueeze(1), y.unsqueeze(1))
             times += 1
             losses.append(loss.item())
-            if times > 5:
+            if times > 25:
                 return sum(losses)/len(losses)
 
     def __crop_audio_window(self, spec, start_frame):

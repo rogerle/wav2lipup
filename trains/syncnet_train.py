@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from torch.optim.lr_scheduler import MultiStepLR
+
 from models.SyncNetModel import SyncNetModel
 from tqdm import tqdm
 from wldatasets.SyncNetDataset import SyncNetDataset
@@ -58,27 +60,25 @@ def eval_model(val_dataloader, global_step, device, model):
     eval_steps = 1400
     losses = []
     print('Evaluating for {} steps'.format(eval_steps))
-    with LogWriter(logdir="../logs/syncnet_train/eval") as writer:
-        while 1:
-            for vstep, (x, mel, y) in enumerate(val_dataloader):
-                model.eval()
+    while 1:
+        for vstep, (x, mel, y) in enumerate(val_dataloader):
+            model.eval()
 
-                x = x.to(device)
-                mel = mel.to(device)
-                y = y.to(device)
+            x = x.to(device)
+            mel = mel.to(device)
+            y = y.to(device)
 
-                a, v = model(mel, x)
+            a, v = model(mel, x)
 
-                d = F.cosine_similarity(a, v)
-                loss = logloss(d.unsqueeze(1), y)
+            d = F.cosine_similarity(a, v)
+            loss = logloss(d.unsqueeze(1), y)
 
-                losses.append(loss.item())
+            losses.append(loss.item())
 
-                if vstep > eval_steps: break
-            averaged_loss = sum(losses) / len(losses)
-            writer.add_scalar(tag='eval/loss', step=global_step, value=averaged_loss)
-            print('The evaluating loss:{}'.format(averaged_loss))
-            return
+            if vstep > eval_steps: break
+        averaged_loss = sum(losses) / len(losses)
+        print('The evaluating loss:{}'.format(averaged_loss))
+        return averaged_loss
 
 
 def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir, start_step, start_epoch):
@@ -87,6 +87,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
     numepochs = param.epochs
     checkpoint_interval = param.syncnet_checkpoint_interval
     eval_interval = param.syncnet_eval_interval
+    scheduler = MultiStepLR(optimizer,milestones=[param.syncnet_iepoch,param.syncnet_mepoch],gamma=0.1)
 
     with LogWriter(logdir="../logs/syncnet_train/train") as writer:
         while epoch < numepochs:
@@ -117,12 +118,16 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
 
                 if global_step % eval_interval == 0:
                     with torch.no_grad():
-                        eval_model(val_dataloader, global_step, device, model)
+                        eval_loss=eval_model(val_dataloader, global_step, device, model)
+                        writer.add_scalar(tag='eval/loss', step=global_step, value=eval_loss)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, numepochs))
                 prog_bar.set_postfix(train_loss=running_loss / (step + 1), step=step + 1, gloab_step=global_step)
                 writer.add_scalar(tag='train/step_loss', step=global_step, value=running_loss / (step + 1))
+            #自动调整lr，在40和100个epoch时自动调整
+            scheduler.step()
             epoch += 1
+
 
 
 def main():
