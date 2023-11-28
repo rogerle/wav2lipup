@@ -81,7 +81,7 @@ def process_data(inputdir, outputdir, device):
         done_bar = tqdm(enumerate(done_files),total=len(done_files),leave=False)
         for item in done_files:
             files.remove(item)
-            done_bar.set_description('produce break point!')
+            done_bar.set_description('produce break point!{}'.format(item))
 
     prog_bar = tqdm(enumerate(files), total=total_files, leave=False)
     for i, fp in prog_bar:
