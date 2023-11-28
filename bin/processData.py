@@ -125,7 +125,7 @@ def clear_data(inputdir):
             for img in line.glob('**/*.jpg'):
                 if img.is_file():
                     imgs.append(img)
-            if imgs is None or len(imgs) <= 25 or len(imgs) % 25 != 0:
+            if imgs is None or len(imgs) < 25 or len(imgs) % 25 != 0:
                 print('delete empty or bad video!{}'.format(line))
                 shutil.rmtree(line)
 
