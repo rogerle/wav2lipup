@@ -77,7 +77,7 @@ class DataProcessor():
                 file_name = split_dir + '/{}.jpg'.format(j)
                 face = frame[int(y1):int(y2), int(x1):int(x2)]
                 # faces['{}'.format(j)] = face
-                if face.size() == 0:
+                if np.size(face) == 0:
                     continue
                 cv2.imwrite(file_name, face)
                 """max_score = scores[0]

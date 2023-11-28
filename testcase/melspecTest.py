@@ -33,7 +33,7 @@ class MelSpecTest(unittest.TestCase):
         wavform = F.preemphasis(wavform,float(asis))
         specgram = torchaudio.transforms.MelSpectrogram(sample_rate=16000,
                                                         n_fft=850,
-                                                        power=1.,
+                                                        power=2.,
                                                         hop_length=200,
                                                         win_length=850,
                                                         f_max=7600,
@@ -45,8 +45,8 @@ class MelSpecTest(unittest.TestCase):
                                                         mel_scale='htk'
                                                         )
         orig_mel = specgram(wavform)
-        orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=-100,
-                                     db_multiplier=20, top_db=80)
+        orig_mel = F.amplitude_to_DB(orig_mel, multiplier=20., amin=-100,
+                                     db_multiplier=-20)
         orig_mel = torch.mean(orig_mel, dim=0)
         mel = orig_mel.t().numpy().copy()
 
@@ -54,12 +54,12 @@ class MelSpecTest(unittest.TestCase):
         #np.clip((2 * 4) * (
         #            (mel - (-100)) / (-(-100))) - 4,
        #         -4, 4)
-        start_frame_num = 48
+        """start_frame_num = 48
 
         start_idx = int(80. * (start_frame_num / float(25)))  # 80.乘出来刚好是frame的长度
 
         end_idx = start_idx + 16
-        mel = mel[start_idx:end_idx,:]
+        mel = mel[start_idx:end_idx,:]"""
 
 
         fig, axs = plt.subplots(3, 1)

@@ -8,7 +8,6 @@
 
 
 """
-import os
 import argparse
 import shutil
 from pathlib import Path, PurePath
@@ -63,14 +62,36 @@ def process_data(inputdir, outputdir, device):
     files = []
     for f in Path.glob(Path(inputdir), '**/*.mp4'):
         if f.is_file():
-            files.append(f)
+            files.append(f.as_posix())
     files.sort()
     total_files = len(files)
+
+    dones = get_processed_data(outputdir)
+    done_files=[]
+    if dones is not None and len(dones) > 0:
+        for done_file in dones:
+            d_root = Path(done_file).parts[-2]
+            d_name = Path(done_file).parts[-1]
+            d_s = d_name.split('_')
+            d_d = d_s[-3]
+            d_f = d_s[-2]+'_'+d_s[-1]+".mp4"
+            d_full=inputdir+'/'+d_root+'/'+d_d+'/'+d_f
+            done_files.append(d_full)
+
+        for item in done_files:
+            files.remove(item)
+
     prog_bar = tqdm(enumerate(files), total=total_files, leave=False)
     for i, fp in prog_bar:
         prog_bar.set_description('Extract face frame:{}/{}'.format(i, total_files))
         dataProcessor.processVideoFile(str(fp), device=device, processed_data_root=outputdir)
 
+def get_processed_data(processed_data_root):
+    done_dir = []
+    for done in Path.glob(Path(processed_data_root), '*/*'):
+        if done.is_dir():
+            done_dir.append(done)
+    return done_dir
 
 def train_file_write(inputdir):
     train_txt = inputdir + '/train.txt'
