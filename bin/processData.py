@@ -13,7 +13,6 @@ import shutil
 from functools import partial
 from pathlib import Path, PurePath
 import multiprocessing
-from multiprocessing import Pool
 from tqdm import tqdm
 
 from process_util.DataProcessor import DataProcessor
@@ -92,7 +91,7 @@ def process_data(inputdir, outputdir):
 
     files = get_processed_files(inputdir, outputdir)
     proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
-
+    multiprocessing.set_start_method('spawn')
     num_p = int(multiprocessing.cpu_count()/2)
     pool = multiprocessing.Pool(num_p)
 
