@@ -88,7 +88,7 @@ def get_processed_files(inputdir, outputdir):
 
 def process_data(inputdir, outputdir):
     dataProcessor = DataProcessor()
-
+    results = []
     files = get_processed_files(inputdir, outputdir)
     proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
 
@@ -96,9 +96,9 @@ def process_data(inputdir, outputdir):
     ctx = multiprocessing.get_context('spawn')
     pool = ctx.Pool(num_p)
     prog_bar = tqdm(pool.imap(proc_f,files), total=len(files))
-    results = []
     for result in prog_bar:
         results.append(result)
+    pool.close()
     return results
 
 def get_processed_data(processed_data_root):
@@ -132,6 +132,8 @@ def train_file_write(inputdir):
 
 
 def clear_data(inputdir):
+    train_txt = inputdir + '/train.txt'
+    train_list = get_list(train_txt)
     for line in tqdm(Path.glob(Path(inputdir), '*/*')):
         if line.is_dir():
             imgs = []
@@ -140,8 +142,12 @@ def clear_data(inputdir):
                     imgs.append(img)
             if imgs is None or len(imgs) < 25 or len(imgs) % 25 != 0:
                 print('delete empty or bad video!{}'.format(line))
-                shutil.rmtree(line)
+                dirs = line.parts
+                bad_line = str(dirs[-2] + '/' + dirs[-1])
+                train_list.remove(bad_line)
 
+    with open(inputdir + '/train.txt', 'w', encoding='utf-8') as fw:
+        fw.write("\n".join(train_list))
 
 def sync_data(inputdir):
     train_txt = inputdir + '/train.txt'
@@ -192,11 +198,6 @@ def main():
     preProcess_dir = data_root + '/preProcessed_data'
     process_dir = data_root + '/processed_data'
 
-    if args.gpu_num == 0:
-        device = 'cpu'
-    else:
-        device = 'gpu'
-
     if p_step == 0:
         print("produce the step {}".format(p_step))
         orignal_process(original_dir)
@@ -208,8 +209,8 @@ def main():
         process_data(preProcess_dir, process_dir)
     elif p_step == 3:
         print("produce the step {}".format(p_step))
-        clear_data(process_dir)
         train_file_write(process_dir)
+        clear_data(process_dir)
     elif p_step == 4:
         print("produce the step {}".format(p_step))
         sync_data(process_dir)
