@@ -226,7 +226,6 @@ def parse_args():
     parser.add_argument("--preprocess_type", help='ASR or time split', default='ASR', type=str)
     parser.add_argument("--process_step", help='process data\'s step 1 orig,2.pre 3.pro 4.write file', default=0,
                         type=int)
-    parser.add_argument("--gpu_num", help='gpu number', default=0, type=int)
     args = parser.parse_args()
 
     return args
