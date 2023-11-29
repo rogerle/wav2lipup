@@ -12,7 +12,7 @@ import argparse
 import shutil
 from functools import partial
 from pathlib import Path, PurePath
-import multiprocessing
+from torch import multiprocessing
 from tqdm import tqdm
 
 from process_util.DataProcessor import DataProcessor
@@ -93,8 +93,8 @@ def process_data(inputdir, outputdir):
     proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
 
     num_p = int(multiprocessing.cpu_count()/2)
-    pool = multiprocessing.Pool(num_p)
-    print('multiprocess start method:{}'.format(multiprocessing.get_start_method()))
+    ctx = multiprocessing.get_context('spawn')
+    pool = ctx.Pool(num_p)
     prog_bar = tqdm(pool.imap(proc_f,files), total=len(files))
     results = []
     for result in prog_bar:
