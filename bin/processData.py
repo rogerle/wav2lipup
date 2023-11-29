@@ -10,8 +10,10 @@
 """
 import argparse
 import shutil
+from functools import partial
 from pathlib import Path, PurePath
-
+import multiprocessing
+from multiprocessing import Pool
 from tqdm import tqdm
 
 from process_util.DataProcessor import DataProcessor
@@ -57,8 +59,7 @@ def preProcess(inputdir, outputdir, preprocess_type):
                                         ext='mp4')
 
 
-def process_data(inputdir, outputdir, device):
-    dataProcessor = DataProcessor()
+def get_processed_files(inputdir, outputdir):
     files = []
     for f in Path.glob(Path(inputdir), '**/*.mp4'):
         if f.is_file():
@@ -68,7 +69,7 @@ def process_data(inputdir, outputdir, device):
     print('total files to processed:{}'.format(total_files))
 
     dones = get_processed_data(outputdir)
-    done_files=[]
+    done_files = []
     if dones is not None and len(dones) > 0:
         print('break point continue!')
         for done_file in dones:
@@ -76,18 +77,30 @@ def process_data(inputdir, outputdir, device):
             d_name = Path(done_file).parts[-1]
             d_s = d_name.split('_')
             d_d = d_s[-3]
-            d_f = d_s[-2]+'_'+d_s[-1]+".mp4"
-            d_full=inputdir+'/'+d_root+'/'+d_d+'/'+d_f
+            d_f = d_s[-2] + '_' + d_s[-1] + ".mp4"
+            d_full = inputdir + '/' + d_root + '/' + d_d + '/' + d_f
             done_files.append(d_full)
-        done_bar = tqdm(enumerate(done_files),total=len(done_files),leave=False)
+        done_bar = tqdm(enumerate(done_files), total=len(done_files), leave=False)
         for item in done_files:
             files.remove(item)
             done_bar.set_description('produce break point!{}'.format(item))
+    return files
 
-    prog_bar = tqdm(enumerate(files), total=len(files), leave=False)
-    for i, fp in prog_bar:
-        prog_bar.set_description('Extract face frame:{}/{}'.format(i, len(files)))
-        dataProcessor.processVideoFile(str(fp), device=device, processed_data_root=outputdir)
+
+def process_data(inputdir, outputdir):
+    dataProcessor = DataProcessor()
+
+    files = get_processed_files(inputdir, outputdir)
+    proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
+
+    num_p = int(multiprocessing.cpu_count()/2)
+    pool = multiprocessing.Pool(num_p)
+
+    prog_bar = tqdm(pool.imap(proc_f,files), total=len(files))
+    results = []
+    for result in prog_bar:
+        results.append(result)
+    return results
 
 def get_processed_data(processed_data_root):
     done_dir = []
@@ -95,6 +108,7 @@ def get_processed_data(processed_data_root):
         if done.is_dir():
             done_dir.append(done)
     return done_dir
+
 
 def train_file_write(inputdir):
     train_txt = inputdir + '/train.txt'
@@ -129,46 +143,45 @@ def clear_data(inputdir):
                 print('delete empty or bad video!{}'.format(line))
                 shutil.rmtree(line)
 
+
 def sync_data(inputdir):
-    train_txt = inputdir+'/train.txt'
-    test_txt = inputdir+'/test.txt'
-    eval_txt = inputdir+'/eval.txt'
-    exclude_txt =inputdir+'/score.txt'
+    train_txt = inputdir + '/train.txt'
+    test_txt = inputdir + '/test.txt'
+    eval_txt = inputdir + '/eval.txt'
+    exclude_txt = inputdir + '/score.txt'
     train_list = get_list(train_txt)
     test_list = get_list(test_txt)
     eval_list = get_list(eval_txt)
-    exclude_list= get_list(exclude_txt)
-    train_list=clear_badv(train_list,exclude_list)
-    test_list=clear_badv(test_list,exclude_list)
-    eval_list=clear_badv(eval_list,exclude_list)
+    exclude_list = get_list(exclude_txt)
+    train_list = clear_badv(train_list, exclude_list)
+    test_list = clear_badv(test_list, exclude_list)
+    eval_list = clear_badv(eval_list, exclude_list)
 
-
-
-    with open(inputdir+'/train.txt','w',encoding='utf-8') as fw:
+    with open(inputdir + '/train.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(train_list))
 
-    with open(inputdir+'/test.txt','w',encoding='utf-8') as fw:
+    with open(inputdir + '/test.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(test_list))
 
-    with open(inputdir+'/eval.txt','w',encoding='utf-8') as fw:
+    with open(inputdir + '/eval.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(eval_list))
 
+
 def get_list(inputText):
-    list=[]
+    list = []
     with open(inputText, 'r') as f:
         for line in f:
             line = line.strip()
             list.append(line)
     return list
 
-def clear_badv(all_list,exclude_list):
+
+def clear_badv(all_list, exclude_list):
     for item in exclude_list:
         if item in all_list:
             all_list.remove(item)
 
     return all_list
-
-
 
 
 def main():
@@ -193,7 +206,7 @@ def main():
         preProcess(original_dir, preProcess_dir, preprocess_type)
     elif p_step == 2:
         print("produce the step {}".format(p_step))
-        process_data(preProcess_dir, process_dir, device)
+        process_data(preProcess_dir, process_dir)
     elif p_step == 3:
         print("produce the step {}".format(p_step))
         clear_data(process_dir)
