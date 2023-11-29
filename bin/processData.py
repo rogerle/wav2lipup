@@ -91,10 +91,10 @@ def process_data(inputdir, outputdir):
 
     files = get_processed_files(inputdir, outputdir)
     proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
-    multiprocessing.set_start_method('spawn')
+
     num_p = int(multiprocessing.cpu_count()/2)
     pool = multiprocessing.Pool(num_p)
-
+    print('multiprocess start method:{}'.format(multiprocessing.get_start_method()))
     prog_bar = tqdm(pool.imap(proc_f,files), total=len(files))
     results = []
     for result in prog_bar:
