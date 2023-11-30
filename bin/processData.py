@@ -48,6 +48,7 @@ def orignal_process(inputdir):
 def preProcess(inputdir, outputdir, preprocess_type):
     processer = PreProcessor()
     if preprocess_type == 'Time':
+
         processer.videosPreProcessByTime(s_time=5,
                                          input_dir=inputdir,
                                          output_dir=outputdir,
