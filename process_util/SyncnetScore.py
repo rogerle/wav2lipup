@@ -65,8 +65,6 @@ class SyncnetScore():
                 with open(root + '/score.txt', 'a') as f:
                     f.write("{}/{}\n".format(parts[-2],parts[-1]))
 
-
-
     def __score(self, dir, syncnet):
         files = []
         wavfile = dir + '/audio.wav'
@@ -76,72 +74,32 @@ class SyncnetScore():
                 files.append(int(img))
         files.sort(key=int)
         syncnet.eval()
-        logloss = nn.BCELoss()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        times = 0
-        losses = []
-        while 1:
-            img = random.choice(files)
-            if img > len(files)-5 :
-                continue
-            window = []
-            for idx in range(img, img + 5):
-                img_name = dir + '/' + '{}.jpg'.format(idx)
-                img_f = cv2.imread(img_name)
-                try:
-                    img_f = cv2.resize(img_f, (288, 288))
-                except Exception as e:
-                    print('image resize error:{}'.format(e))
-                window.append(img_f)
+        img_windows = self.__get_img_windows(dir,files)
+        original_mel = self.__get_mel(wavfile)
+        aud_windows = self.__get_aud_windows(original_mel.copy(),files)
+        dist=[]
+        if len(img_windows)!=len(aud_windows):
+            return None
+        for i in range(5,len(img_windows)):
+            x = img_windows[i]
+            mel = aud_windows[i]
+            for j in range(i-5 if i >=5 else i,i+5):
+                if j>len(img_windows)-5:
+                    break
+                x = img_windows[i]
+                mel = aud_windows[j]
+                x = x.to(device)
+                mel = mel.to(device)
+                mel = mel.unsqueeze(0)
+                x = x.unsqueeze(0)
 
-            x = np.concatenate(window, axis=2) / 255.
-            x = x.transpose(2, 0, 1)
-            x = x[:, x.shape[1] // 2:]
-            x = torch.tensor(x, dtype=torch.float)
+                a, v = syncnet(mel, x)
+                d = F2.cosine_similarity(a, v)
+                dist.append(d)
+        return
 
-            try:
-                wavform, sf = torchaudio.load(wavfile)
 
-                wavform = F.preemphasis(wavform, 0.97)
-                specgram = torchaudio.transforms.MelSpectrogram(sample_rate=16000,
-                                                                n_fft=800,
-                                                                power=1.,
-                                                                hop_length=200,
-                                                                win_length=800,
-                                                                f_min=55,
-                                                                f_max=7600,
-                                                                n_mels=80,
-                                                                normalized=True)
-                orig_mel = specgram(wavform)
-                orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=-100,
-                                             db_multiplier=20, top_db=100)
-                orig_mel = torch.mean(orig_mel, dim=0)
-                orig_mel = orig_mel.t().numpy()
-            except Exception as e:
-                print("mel error:".format(e))
-                continue
-            mel = self.__crop_audio_window(orig_mel.copy(), img)
-
-            if mel.shape[0] != 16:
-                continue
-
-            mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
-            x = x.unsqueeze(0)
-            mel = mel.unsqueeze(0)
-            # 计算分数
-            x = x.to(device)
-            mel = mel.to(device)
-
-            a, v = syncnet(mel, x)
-
-            d = F2.cosine_similarity(a, v)
-            y = torch.ones(1).float()
-            y=y.to(device)
-            loss = logloss(d.unsqueeze(1), y.unsqueeze(1))
-            times += 1
-            losses.append(loss.item())
-            if times > 25:
-                return sum(losses)/len(losses)
 
     def __crop_audio_window(self, spec, start_frame):
         start_frame_num = start_frame
@@ -153,3 +111,67 @@ class SyncnetScore():
         spec = spec[start_idx:end_idx, :]
 
         return spec
+
+    def __get_mel(self,wavfile):
+        try:
+            wavform, sf = torchaudio.load(wavfile)
+
+            wavform = F.preemphasis(wavform, 0.97)
+            specgram = torchaudio.transforms.MelSpectrogram(sample_rate=16000,
+                                                            n_fft=800,
+                                                            power=1.,
+                                                            hop_length=200,
+                                                            win_length=800,
+                                                            f_min=55,
+                                                            f_max=7600,
+                                                            n_mels=80,
+                                                            normalized=True)
+            orig_mel = specgram(wavform)
+            orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=-100,
+                                         db_multiplier=20, top_db=100)
+            orig_mel = torch.mean(orig_mel, dim=0)
+            orig_mel = orig_mel.t().numpy()
+        except Exception as e:
+            print("mel error:".format(e))
+            return None
+        return orig_mel
+
+    def __get_img_windows(self,path, files):
+        windows=[]
+        for idx,fname in enumerate(files):
+            startid = fname
+            seekid = fname + 5
+            if startid > len(files)- 5:
+                break
+            window=[]
+            for fidx in range(startid,seekid):
+                img_name = path + '/' + '{}.jpg'.format(fidx)
+                img_f = cv2.imread(img_name)
+                try:
+                    img_f = cv2.resize(img_f, (288, 288))
+                except Exception as e:
+                    print('image resize error:{}'.format(e))
+                window.append(img_f)
+            x = np.concatenate(window, axis=2) / 255.
+            x = x.transpose(2, 0, 1)
+            x = x[:, x.shape[1] // 2:]
+            x = torch.tensor(x, dtype=torch.float)
+
+            windows.append(x)
+        return windows
+
+    def __get_aud_windows(self, original_mel, files):
+        aud_windows=[]
+        for idx,fname in enumerate(files):
+            if fname > len(files)-5:
+                break
+            mel = self.__crop_audio_window(original_mel.copy(),fname)
+            if mel.shape[0]!=16:
+                continue
+            mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
+
+            aud_windows.append(mel)
+        return aud_windows
+
+
+

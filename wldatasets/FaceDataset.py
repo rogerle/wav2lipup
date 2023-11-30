@@ -6,6 +6,7 @@ import torch
 from pathlib import Path
 
 import torchaudio
+import torchaudio.functional as F
 from torch.utils.data import Dataset
 
 from process_util.ParamsUtil import ParamsUtil
@@ -13,6 +14,7 @@ from process_util.ParamsUtil import ParamsUtil
 
 class FaceDataset(Dataset):
     hp = ParamsUtil()
+
     def __init__(self, data_dir,
                  run_type: str = 'train',
                  **kwargs):
@@ -25,83 +27,50 @@ class FaceDataset(Dataset):
         self.img_size = kwargs['img_size']
         self.dirlist = self.__get_split_video_list()
 
-    def __getitem__(self, index):
+    def __getitem__(self, idx):
         """
         循环去一段视频和一段错误视频进行网络对抗，这里就是取两个不同视频的方法
         :param index: the index of item
         :return: image
         """
+        img_dir = self.dirlist[idx]
         while 1:
-            # 随机抽取一个视频的文件进行处理
-            idx = random.randint(0, len(self.dirlist) - 1)
-            audio_index = idx
-            image_names = self.__get_imgs(idx)
-            hp = self.hp
-            if len(image_names) <=3 * hp.syncnet_T:
+            # 随机抽取一个帧作为起始帧进行处理
+            image_names = self.__get_imgs(img_dir)
+            if image_names is None or len(image_names) <= 3 * self.hp.syncnet_T:
                 continue
 
-
-            img_name = random.choice(image_names)
-            wrong_img_name = random.choice(image_names)
-            while wrong_img_name == img_name:
-                wrong_img_name = random.choice(image_names)
-
-            window_fnames = self.__get_window(img_name)
-            wrong_window_fnames = self.__get_window(wrong_img_name)
-            if window_fnames is None or wrong_window_fnames is None:
+            # 获取连续5张脸，正确和错误的
+            img_name, wrong_img_name = self.__get_choosen(image_names)
+            window = self.__get_window(img_name,img_dir)
+            wrong_window = self.__get_window(wrong_img_name,img_dir)
+            if window is None or wrong_window is None:
                 continue
 
-            window = self.__read_window(window_fnames)
-            if window is None:
+            # 对音频进行mel图谱化，并进行对应。
+            orginal_mel = self.__get_orginal_mel(img_dir)
+
+            mel = self.__crop_audio_window(orginal_mel.copy(),int(img_name))
+            if mel is None or mel.shape[0] != self.hp.syncnet_mel_step_size:
                 continue
 
-            wrong_window = self.__read_window(wrong_window_fnames)
-            if wrong_window is None:
-                continue
-
-
-           # 对音频进行mel图谱化，并进行对应。
-            vid = self.dirlist[audio_index]
-
-            wavfile = self.data_dir + '/' + vid + '/audio.wav'
-            try:
-                wavform, sf = torchaudio.load(wavfile,channels_first=True)
-                specgram = torchaudio.transforms.MelSpectrogram(sample_rate=hp.sample_rate,
-                                                                n_fft=hp.n_fft,
-                                                                hop_length=hp.hop_size,
-                                                                win_length=hp.win_size,
-                                                                f_min=hp.fmin,
-                                                                f_max=hp.fmax,
-                                                                n_mels=hp.num_mels,
-                                                                normalized=hp.signal_normalization)
-                orig_mel = specgram(wavform)[0]
-                orig_mel = orig_mel.t().numpy()
-            except Exception as e:
-                continue
-
-            mel = self.__crop_audio_window(orig_mel.copy(),img_name)
-
-            if mel.shape[0] != hp.syncnet_mel_step_size:
-                continue
-
-            indiv_mels = self.__getsegmented_mels(orig_mel.copy(), img_name)
+            indiv_mels = self.__getsegmented_mels(orginal_mel.copy(), img_name)
 
             if indiv_mels is None:
                 continue
             # 对window进行范围缩小到0-1之间的array的处理
-            window = self.__narray_window(window)
+            window = self.__prepare_window(window)
             y = window.copy()
-            # 把图片的下半部分抹去
+            # 把图片的上半部分抹去
             window[:, :, window.shape[2] // 2:] = 0.
 
-            wrong_window = self.__narray_window(wrong_window)
+            wrong_window = self.__prepare_window(wrong_window)
             x = np.concatenate([window, wrong_window], axis=0)
 
-
-            x = torch.tensor(x,dtype=torch.float)
-            y = torch.tensor(y,dtype=torch.float)
-            mel = torch.tensor(np.transpose(mel,(1,0)),dtype=torch.float).unsqueeze(0)
-            indiv_mels = torch.tensor(indiv_mels,dtype=torch.float).unsqueeze(1)
+            x = torch.tensor(x, dtype=torch.float)
+            y = torch.tensor(y, dtype=torch.float)
+            mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
+            indiv_mels = torch.tensor(indiv_mels, dtype=torch.float).unsqueeze(1)
 
             return x, indiv_mels, mel, y
 
@@ -111,6 +80,14 @@ class FaceDataset(Dataset):
     """
         下面的方法都是内部的方法，用于数据装载时，对数据的处理
     """
+
+    def __get_choosen(self, image_names):
+        img_name = random.choice(image_names)
+        wrong_img_name = random.choice(image_names)
+        while wrong_img_name == img_name:
+            wrong_img_name = random.choice(image_names)
+
+        return img_name, wrong_img_name
 
     def __get_split_video_list(self):
         load_file = self.data_dir + '/{}.txt'.format(self.type)
@@ -122,23 +99,29 @@ class FaceDataset(Dataset):
 
         return dirlist
 
-    def __get_imgs(self, index):
-        vid = self.dirlist[index]
+    def __get_imgs(self, img_dir):
         img_names = []
-        for img in Path().joinpath(self.data_dir, vid).glob('**/*.jpg'):
+        for img in Path(self.data_dir + '/' + img_dir).glob('**/*.jpg'):
+            img = img.stem
             img_names.append(img)
+        img_names.sort(key=int)
         return img_names
 
-    def __get_window(self, img_name):
-        start_id = int(Path(img_name).stem)
-        seek_id = start_id + self.hp.syncnet_T
-        vidPath = Path(img_name).parent
+    def __get_window(self, img_name, img_dir):
+        start_id = int(img_name)
+        seek_id = start_id + int(self.hp.syncnet_T)
+        vidPath = self.data_dir + '/' + img_dir
         window_frames = []
         for frame_id in range(start_id, seek_id):
-            frame = str(vidPath) + '/{}.jpg'.format(frame_id)
-            if not Path(frame).is_file():
+            frame = vidPath + '/{}.jpg'.format(frame_id)
+            if Path(frame).exists() is False:
                 return None
-            window_frames.append(frame)
+            try:
+                img = cv2.imread(frame)
+                img = cv2.resize(img, (self.img_size, self.img_size))
+            except Exception as e:
+                return None
+            window_frames.append(img)
         return window_frames
 
     def __read_window(self, window_fnames):
@@ -155,7 +138,7 @@ class FaceDataset(Dataset):
             window.append(img)
         return window
 
-    def __narray_window (self, window):
+    def __prepare_window(self, window):
         # 数组转换3xTxHxW
         wa = np.asarray(window) / 255.
         wa = np.transpose(wa, (3, 0, 1, 2))
@@ -172,20 +155,45 @@ class FaceDataset(Dataset):
 
         end_idx = start_idx + self.hp.syncnet_mel_step_size
 
-        spec = spec[start_idx:end_idx,:]
+        spec = spec[start_idx:end_idx, :]
 
         return spec
 
     def __getsegmented_mels(self, spec, image_name):
         mels = []
         start_frame_num = int(Path(image_name).stem) + 1
-        if start_frame_num -2 < 0:
+        if start_frame_num - 2 < 0:
             return None
-        for i in range(start_frame_num,start_frame_num + self.hp.syncnet_T):
-            m = self.__crop_audio_window(spec,i - 2)
+        for i in range(start_frame_num, start_frame_num + self.hp.syncnet_T):
+            m = self.__crop_audio_window(spec, i - 2)
             if m.shape[0] != self.hp.syncnet_mel_step_size:
                 return None
-            mels.append(np.transpose(m,(1,0)))
+            mels.append(np.transpose(m, (1, 0)))
         mels = np.asarray(mels)
 
         return mels
+
+    def __get_orginal_mel(self, img_dir):
+        wavfile = self.data_dir + '/' + img_dir + '/audio.wav'
+        try:
+            wavform, sf = torchaudio.load(wavfile)
+
+            wavform = F.preemphasis(wavform, self.hp.preemphasis)
+            specgram = torchaudio.transforms.MelSpectrogram(sample_rate=self.hp.sample_rate,
+                                                            n_fft=self.hp.n_fft,
+                                                            power=1.,
+                                                            hop_length=self.hp.hop_size,
+                                                            win_length=self.hp.win_size,
+                                                            f_min=self.hp.fmin,
+                                                            f_max=self.hp.fmax,
+                                                            n_mels=self.hp.num_mels,
+                                                            normalized=self.hp.signal_normalization)
+            orig_mel = specgram(wavform)
+            orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=self.hp.min_level_db,
+                                         db_multiplier=self.hp.ref_level_db)
+            orig_mel = torch.mean(orig_mel, dim=0)
+            orig_mel = orig_mel.t().numpy()
+        except Exception as e:
+            orig_mel = None
+
+        return orig_mel

@@ -102,60 +102,59 @@ def eval_model(test_data_loader, model, disc, global_step):
     eval_steps = 300
     print('Evaluating for {} steps:'.format(eval_steps))
     running_sync_loss, running_l1_loss, running_disc_real_loss, running_disc_fake_loss, running_perceptual_loss = [], [], [], [], []
-    with LogWriter(logdir="../logs/wav2lip/train") as writer:
-        while 1:
-            for step, (x, indiv_mels, mel, gt) in enumerate((test_data_loader)):
-                model.eval()
-                disc.eval()
 
-                x = x.to(device)
-                mel = mel.to(device)
-                indiv_mels = indiv_mels.to(device)
-                gt = gt.to(device)
+    while 1:
+        for step, (x, indiv_mels, mel, gt) in enumerate((test_data_loader)):
+            model.eval()
+            disc.eval()
 
-                pred = disc(gt)
-                disc_real_loss = F.binary_cross_entropy(pred, torch.ones((len(pred), 1)).to(device))
+            x = x.to(device)
+            mel = mel.to(device)
+            indiv_mels = indiv_mels.to(device)
+            gt = gt.to(device)
 
-                g = model(indiv_mels, x)
-                pred = disc(g)
-                disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros((len(pred), 1)).to(device))
+            pred = disc(gt)
+            disc_real_loss = F.binary_cross_entropy(pred, torch.ones((len(pred), 1)).to(device))
 
-                running_disc_real_loss.append(disc_real_loss.item())
-                running_disc_fake_loss.append(disc_fake_loss.item())
+            g = model(indiv_mels, x)
+            pred = disc(g)
+            disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros((len(pred), 1)).to(device))
 
-                sync_loss = get_sync_loss(mel=mel, g=g)
+            running_disc_real_loss.append(disc_real_loss.item())
+            running_disc_fake_loss.append(disc_fake_loss.item())
 
-                if param.disc_wt > 0.:
-                    perceptual_loss = disc.perceptual_forward(g)
-                else:
-                    perceptual_loss = 0.
+            sync_loss = get_sync_loss(mel=mel, g=g)
 
-                l1loss = recon_loss(g, gt)
+            if param.disc_wt > 0.:
+                perceptual_loss = disc.perceptual_forward(g)
+            else:
+                perceptual_loss = 0.
 
-                running_l1_loss.append(l1loss.item())
-                running_sync_loss.append(sync_loss.item())
+            l1loss = recon_loss(g, gt)
 
-                if param.disc_wt > 0.:
-                    running_perceptual_loss.append(perceptual_loss.item())
-                else:
-                    running_perceptual_loss.append(0.)
+            running_l1_loss.append(l1loss.item())
+            running_sync_loss.append(sync_loss.item())
 
-                if step > eval_steps: break
+            if param.disc_wt > 0.:
+                running_perceptual_loss.append(perceptual_loss.item())
+            else:
+                running_perceptual_loss.append(0.)
 
-            print('L1: {}, \n Sync: {}, \n Percep: {} | Fake: {}, Real: {}'.format(
-                sum(running_l1_loss) / len(running_l1_loss),
-                sum(running_sync_loss) / len(
-                    running_sync_loss),
-                sum(running_perceptual_loss) / len(
-                    running_perceptual_loss),
-                sum(running_disc_fake_loss) / len(
-                    running_disc_fake_loss),
-                sum(running_disc_real_loss) / len(
-                    running_disc_real_loss)))
-            eval_loss = sum(running_sync_loss) / len(running_sync_loss)
-            writer.add_scalar(tag='eval/loss', step=global_step, value=eval_loss)
+            if step > eval_steps: break
 
-            return eval_loss
+        print('L1: {}, \n Sync: {}, \n Percep: {} | Fake: {}, Real: {}'.format(
+            sum(running_l1_loss) / len(running_l1_loss),
+            sum(running_sync_loss) / len(
+                running_sync_loss),
+            sum(running_perceptual_loss) / len(
+                running_perceptual_loss),
+            sum(running_disc_fake_loss) / len(
+                running_disc_fake_loss),
+            sum(running_disc_real_loss) / len(
+                running_disc_real_loss)))
+        eval_loss = sum(running_sync_loss) / len(running_sync_loss)
+
+        return eval_loss
 
 
 def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
@@ -258,6 +257,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 writer.add_scalar(tag='train/Percep_loss', step=global_step, value=running_perceptual_loss / (step + 1))
                 writer.add_scalar(tag='train/Real_loss', step=global_step, value=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/Fake_loss', step=global_step, value=running_disc_fake_loss / (step + 1))
+
 
             epoch += 1
 
