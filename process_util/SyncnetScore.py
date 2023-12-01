@@ -54,7 +54,7 @@ class SyncnetScore():
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         img_windows = self.__get_img_windows(v_dir, files)
         original_mel = self.__get_mel(wavfile)
-        aud_windows = self.__get_aud_windows(original_mel.copy(), files)
+        aud_windows = self.__get_aud_windows(original_mel, files)
 
         if len(img_windows) != len(aud_windows):
             return None
@@ -70,7 +70,7 @@ class SyncnetScore():
             s_v = v[[i], :].repeat(31, 1)
             s_a = a_pad[i:i + 31, :]
             d = F2.cosine_similarity(s_a, s_v)
-            dists.append(d)
+            dists.append(d.cpu())
         mdist = torch.mean(torch.stack(dists, 1), 1)
         maxval, maxidx = torch.max(mdist, 0)
 
