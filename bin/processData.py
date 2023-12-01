@@ -134,7 +134,11 @@ def train_file_write(inputdir):
 
 def clear_data(inputdir):
     train_txt = inputdir + '/train.txt'
+    test_txt = inputdir + '/test.txt'
+    eval_txt = inputdir + '/eval.txt'
     train_list = get_list(train_txt)
+    test_list = get_list(test_txt)
+    eval_list = get_list(eval_txt)
     bad_list = []
     for line in tqdm(Path.glob(Path(inputdir), '*/*')):
         if line.is_dir():
@@ -147,11 +151,20 @@ def clear_data(inputdir):
                 dirs = line.parts
                 bad_line = str(dirs[-2] + '/' + dirs[-1])
                 bad_list.append(bad_line)
-                train_list.remove(bad_line)
-    with open(inputdir + '/train.txt', 'w', encoding='utf-8') as fw:
+
+    train_list = clear_badv(train_list,bad_list)
+    test_list =clear_badv(test_list,bad_list)
+    eval_list = clear_badv(eval_list,bad_list)
+
+
+    with open(inputdir + '/bad_v.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(bad_list))
     with open(inputdir + '/train.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(train_list))
+    with open(inputdir + '/test.txt', 'w', encoding='utf-8') as fw:
+        fw.write("\n".join(test_list))
+    with open(inputdir + '/eval.txt', 'w', encoding='utf-8') as fw:
+        fw.write("\n".join(eval_list))
 
 def sync_data(inputdir):
     train_txt = inputdir + '/train.txt'
