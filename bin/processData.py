@@ -135,6 +135,7 @@ def train_file_write(inputdir):
 def clear_data(inputdir):
     train_txt = inputdir + '/train.txt'
     train_list = get_list(train_txt)
+    bad_list = []
     for line in tqdm(Path.glob(Path(inputdir), '*/*')):
         if line.is_dir():
             imgs = []
@@ -145,8 +146,10 @@ def clear_data(inputdir):
                 print('delete empty or bad video!{}'.format(line))
                 dirs = line.parts
                 bad_line = str(dirs[-2] + '/' + dirs[-1])
+                bad_list.append(bad_line)
                 train_list.remove(bad_line)
-
+    with open(inputdir + '/train.txt', 'w', encoding='utf-8') as fw:
+        fw.write("\n".join(bad_list))
     with open(inputdir + '/train.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(train_list))
 

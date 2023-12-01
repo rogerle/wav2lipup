@@ -18,11 +18,11 @@ from models.SyncNetModel import SyncNetModel
 
 
 class SyncnetScore():
-    def __init__(self, data_root, default_threshold, checkpoint_pth,filter_score):
+    def __init__(self, data_root, default_threshold, checkpoint_pth, filter_score):
         self.data_root = data_root
         self.dt = default_threshold
         self.checkpoint_pth = checkpoint_pth
-        self.filter_score= float(filter_score)
+        self.filter_score = float(filter_score)
 
     def __load_checkpoint(self, model):
         if torch.cuda.is_available():
@@ -52,18 +52,17 @@ class SyncnetScore():
         for p in syncnet.parameters():
             p.requires_grad = False
         syncnet = self.__load_checkpoint(syncnet)
-        Path(root+'/score.txt').write_text('')
+        Path(root + '/score.txt').write_text('')
 
-        prog_bar = tqdm(enumerate(dir_list), total=len(dir_list), leave=False)
-        for i,dir in prog_bar:
-            score = self.__score(dir, syncnet)
+        prog_bar = tqdm(enumerate(dir_list), total=len(dir_list), leave=True)
+        for i, dir in prog_bar:
+            score,conf = self.__score(dir, syncnet)
             if score is None:
                 continue
-            prog_bar.set_description('score the sync video:{}/{}'.format(dir,score))
+            prog_bar.set_description('score the sync video:{}/{}'.format(dir, score))
             parts = Path(dir).parts
-            if score > self.filter_score:
-                with open(root + '/score.txt', 'a') as f:
-                    f.write("{}/{}\n".format(parts[-2],parts[-1]))
+            with open(root + '/score.txt', 'a') as f:
+                f.write("{}：offset {} conf{}\n".format(dir,score,conf))
 
     def __score(self, dir, syncnet):
         files = []
@@ -75,31 +74,32 @@ class SyncnetScore():
         files.sort(key=int)
         syncnet.eval()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        img_windows = self.__get_img_windows(dir,files)
+        img_windows = self.__get_img_windows(dir, files)
         original_mel = self.__get_mel(wavfile)
-        aud_windows = self.__get_aud_windows(original_mel.copy(),files)
-        dist=[]
-        if len(img_windows)!=len(aud_windows):
+        aud_windows = self.__get_aud_windows(original_mel.copy(), files)
+
+        if len(img_windows) != len(aud_windows):
             return None
-        for i in range(5,len(img_windows)):
-            x = img_windows[i]
-            mel = aud_windows[i]
-            for j in range(i-5 if i >=5 else i,i+5):
-                if j>len(img_windows)-5:
-                    break
-                x = img_windows[i]
-                mel = aud_windows[j]
-                x = x.to(device)
-                mel = mel.to(device)
-                mel = mel.unsqueeze(0)
-                x = x.unsqueeze(0)
 
-                a, v = syncnet(mel, x)
-                d = F2.cosine_similarity(a, v)
-                dist.append(d)
-        return
+        x = torch.cat(img_windows,0)
+        mel = torch.cat(aud_windows,0)
+        x = x.to(device)
+        mel = mel.to(device)
+        a, v = syncnet(mel, x)
+        a_pad = F2.pad(a,(0,0,15,15))
+        dists = []
+        for i in range(0,len(v)):
+            s_v = v[[i],:].repeat(31,1)
+            s_a = a_pad[i:i+31,:]
+            d = F2.cosine_similarity(s_a,s_v)
+            dists.append(d)
+        mdist = torch.mean(torch.stack(dists,1), 1)
+        maxval,maxidx=torch.max(mdist,0)
 
+        offset= 15-maxidx.item()
+        conf = maxval - torch.median(mdist).item()
 
+        return offset,conf
 
     def __crop_audio_window(self, spec, start_frame):
         start_frame_num = start_frame
@@ -112,7 +112,7 @@ class SyncnetScore():
 
         return spec
 
-    def __get_mel(self,wavfile):
+    def __get_mel(self, wavfile):
         try:
             wavform, sf = torchaudio.load(wavfile)
 
@@ -136,15 +136,15 @@ class SyncnetScore():
             return None
         return orig_mel
 
-    def __get_img_windows(self,path, files):
-        windows=[]
-        for idx,fname in enumerate(files):
+    def __get_img_windows(self, path, files):
+        windows = []
+        for idx, fname in enumerate(files):
             startid = fname
             seekid = fname + 5
-            if startid > len(files)- 5:
+            if startid > len(files) - 5:
                 break
-            window=[]
-            for fidx in range(startid,seekid):
+            window = []
+            for fidx in range(startid, seekid):
                 img_name = path + '/' + '{}.jpg'.format(fidx)
                 img_f = cv2.imread(img_name)
                 try:
@@ -155,23 +155,21 @@ class SyncnetScore():
             x = np.concatenate(window, axis=2) / 255.
             x = x.transpose(2, 0, 1)
             x = x[:, x.shape[1] // 2:]
-            x = torch.tensor(x, dtype=torch.float)
+            x = torch.tensor(x, dtype=torch.float).unsqueeze(0)
 
             windows.append(x)
+
         return windows
 
     def __get_aud_windows(self, original_mel, files):
-        aud_windows=[]
-        for idx,fname in enumerate(files):
-            if fname > len(files)-5:
+        aud_windows = []
+        for idx, fname in enumerate(files):
+            if fname > len(files) - 5:
                 break
-            mel = self.__crop_audio_window(original_mel.copy(),fname)
-            if mel.shape[0]!=16:
-                continue
-            mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
+            mel = self.__crop_audio_window(original_mel.copy(), fname)
+            if mel.shape[0] != 16:
+                mel = torch.randn(16,80)
+            mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0).unsqueeze(0)
 
             aud_windows.append(mel)
         return aud_windows
-
-
-
