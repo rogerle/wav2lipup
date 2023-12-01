@@ -11,5 +11,5 @@ source ./parse_options.sh || exit 1
 if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
    python score_video.py --data_root=../data/processed_data \
                          --checkpoint_path=../data/syncnet_checkpoint/sync_checkpoint_step000370000.pth \
-                         --filter_score=0.69
+                         --num_worker=1
 fi

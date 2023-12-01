@@ -5,6 +5,8 @@
 """
 import argparse
 from functools import partial
+from pathlib import Path
+
 from torch import multiprocessing
 from tqdm import tqdm
 
@@ -25,6 +27,8 @@ def main():
     eval_list = get_dirList(eval_txt)
     dir_list +=eval_list
     dir_list +=test_list
+    Path(data_root + '/score.txt').write_text('')
+    Path(data_root + '/bad_off.txt').write_text('')
     score_tools = SyncnetScore()
     proc_f = partial(score_tools.score_video, checkpoint=checkpoint, data_root=data_root)
     ctx = multiprocessing.get_context('spawn')
@@ -34,16 +38,18 @@ def main():
     bad_offset_f = []
     for v_file, offset, conf in prog_bar:
         results.append('video:{} offset:{} conf:{}'.format(v_file,offset,conf))
+        with open(data_root + '/score.txt', 'a') as fw:
+            fw.write("\n{},{},{}".format(v_file,offset,conf))
         if offset<-2 or offset>2:
             bad_offset_f.append(v_file)
+            with open(data_root + '/bad_off.txt', 'a', encoding='utf-8') as fw:
+                fw.write("\n{}".format(v_file))
         prog_bar.set_description('score file:{} offset:{}'.format(v_file, offset))
     pool.close()
     pool.join()
 
-    with open(data_root + '/score.txt', 'w', encoding='utf-8') as fw:
-        fw.write("\n".join(results))
-    with open(data_root + '/bad_off.txt', 'w', encoding='utf-8') as fw:
-        fw.write("\n".join(bad_offset_f))
+
+
 
 
 def get_dirList(path):
