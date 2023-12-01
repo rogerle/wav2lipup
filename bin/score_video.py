@@ -34,7 +34,7 @@ def main():
     bad_offset_f = []
     for v_file, offset, conf in prog_bar:
         results.append('video:{} offset:{} conf:{}'.format(v_file,offset,conf))
-        if offset<-1 or offset>1:
+        if offset<-2 or offset>2:
             bad_offset_f.append(v_file)
         prog_bar.set_description('score file:{} offset:{}'.format(v_file, offset))
     pool.close()
