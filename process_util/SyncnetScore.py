@@ -2,6 +2,7 @@ import random
 from pathlib import Path
 
 import cv2
+import numpy
 import numpy as np
 import torchaudio
 import torch
@@ -142,7 +143,7 @@ class SyncnetScore():
                 img_f = cv2.resize(img_f, (288, 288))
             except Exception as e:
                 print('image resize error:{}'.format(e))
-                img_f = np.random.randn(288, 288, 3)
+                img_f = np.ones((288, 288, 3))
             window.append(img_f)
 
         x = np.concatenate(window, axis=2) / 255.
@@ -156,7 +157,7 @@ class SyncnetScore():
     def __get_aud_windows(self, original_mel, fname):
         mel = self.__crop_audio_window(original_mel.copy(), fname)
         if mel.shape[0] != 16:
-            return torch.randn(1,1,80,16)
+            return torch.zeros(1,1,80,16)
         mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0).unsqueeze(0)
 
         return mel
