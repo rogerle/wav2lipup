@@ -78,20 +78,20 @@ class SyncnetScore():
             aud_feats.append(a.cpu())
 
         if len(lip_feats) != len(aud_feats):
-            return 10,10.
+            return 15,15.
         lip_feat = torch.cat(lip_feats,0)
         aud_feat = torch.cat(aud_feats,0)
-        a_pad = F2.pad(aud_feat, (0, 0, 10, 10))
+        a_pad = F2.pad(aud_feat, (0, 0, 15, 15))
         dists = []
         for i in range(0, len(lip_feat)):
-            s_l = lip_feat[[i], :].repeat(21, 1)
-            s_a = a_pad[i:i + 21, :]
+            s_l = lip_feat[[i], :].repeat(31, 1)
+            s_a = a_pad[i:i + 31, :]
             d = F2.cosine_similarity(s_a, s_l)
             dists.append(d)
         mdist = torch.mean(torch.stack(dists, 1), 1)
         maxval, maxidx = torch.max(mdist, 0)
 
-        offset = 10 - maxidx.item()
+        offset = 15 - maxidx.item()
         conf = maxval - torch.median(mdist).item()
 
         return offset, conf

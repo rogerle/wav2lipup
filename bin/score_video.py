@@ -43,11 +43,11 @@ def main():
     for v_file, offset, conf in prog_bar:
         results.append('video:{} offset:{} conf:{}'.format(v_file,offset,conf))
         with open(data_root + '/score.txt', 'a') as fw:
-            fw.write("\n{},{},{}".format(v_file,offset,conf))
+            fw.write("{},{},{}\n".format(v_file,offset,conf))
         if offset<-2 or offset>2:
             bad_offset_f.append(v_file)
             with open(data_root + '/bad_off.txt', 'a', encoding='utf-8') as fw:
-                fw.write("\n{}".format(v_file))
+                fw.write("{}\n".format(v_file))
         prog_bar.set_description('score file:{} offset:{}'.format(v_file, offset))
     torch.cuda.empty_cache()
     pool.close()
