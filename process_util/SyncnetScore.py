@@ -136,13 +136,13 @@ class SyncnetScore():
         window =[]
         for fidx in range(start_id, seek_id):
             img_name = path + '/' + '{}.jpg'.format(fidx)
-            img_f = cv2.imread(img_name)
-            if np.size(img_f) == 0:
-                img_f = np.random.randn(288,288,3)
+
             try:
+                img_f = cv2.imread(img_name)
                 img_f = cv2.resize(img_f, (288, 288))
             except Exception as e:
                 print('image resize error:{}'.format(e))
+                img_f = np.random.randn(288, 288, 3)
             window.append(img_f)
 
         x = np.concatenate(window, axis=2) / 255.
