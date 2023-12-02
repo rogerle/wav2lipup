@@ -143,7 +143,7 @@ class SyncnetScore():
                 img_f = cv2.resize(img_f, (288, 288))
             except Exception as e:
                 print('image resize error:{}'.format(e))
-                img_f = np.ones((288, 288, 3))
+                img_f = np.zeros((288, 288, 3))
             window.append(img_f)
 
         x = np.concatenate(window, axis=2) / 255.
