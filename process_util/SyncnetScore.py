@@ -73,11 +73,11 @@ class SyncnetScore():
             x = lip_wins.to(device)
             mel = aud_wins.to(device)
             a, v = model(mel, x)
-            lip_feats.append(v)
-            aud_feats.append(a)
+            lip_feats.append(v.cpu())
+            aud_feats.append(a.cpu())
 
         if len(lip_feats) != len(aud_feats):
-            return None
+            return 15,15.
         lip_feat = torch.cat(lip_feats,0)
         aud_feat = torch.cat(aud_feats,0)
         a_pad = F2.pad(aud_feat, (0, 0, 15, 15))
