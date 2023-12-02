@@ -7,6 +7,7 @@ import argparse
 from functools import partial
 from pathlib import Path
 
+import torch
 from torch import multiprocessing
 from tqdm import tqdm
 
@@ -18,6 +19,7 @@ def main():
     data_root = args.data_root
     checkpoint = args.checkpoint_path
     num_worker = args.num_worker
+    batch_size = args.batch_size
 
     train_txt = data_root + '/train.txt'
     test_txt = data_root + '/test.txt'
@@ -30,9 +32,11 @@ def main():
     Path(data_root + '/score.txt').write_text('')
     Path(data_root + '/bad_off.txt').write_text('')
     score_tools = SyncnetScore()
-    proc_f = partial(score_tools.score_video, checkpoint=checkpoint, data_root=data_root)
-    ctx = multiprocessing.get_context('spawn')
-    pool = ctx.Pool(num_worker)
+    proc_f = partial(score_tools.score_video, checkpoint=checkpoint, data_root=data_root,batch_size=batch_size)
+    multiprocessing.set_start_method('spawn', force=True)
+    pool=multiprocessing.Pool(processes=num_worker)
+    #ctx = multiprocessing.get_context('spawn')
+   # pool = ctx.Pool(num_worker)
     prog_bar = tqdm(pool.imap(proc_f, dir_list), total=len(dir_list))
     results = []
     bad_offset_f = []
@@ -45,6 +49,7 @@ def main():
             with open(data_root + '/bad_off.txt', 'a', encoding='utf-8') as fw:
                 fw.write("\n{}".format(v_file))
         prog_bar.set_description('score file:{} offset:{}'.format(v_file, offset))
+    torch.cuda.empty_cache()
     pool.close()
     pool.join()
 
@@ -68,6 +73,7 @@ def parse_args():
     parser.add_argument("--data_root", help='Root folder of the preprocessed dataset', required=True, type=str)
     parser.add_argument('--checkpoint_path', help='Load he pre-trained ', required=True, )
     parser.add_argument('--num_worker', help='multiprocessor number', default=6, type=int)
+    parser.add_argument('--batch_size', help='produce img batch', default=20, type=int)
     args = parser.parse_args()
 
     return args
