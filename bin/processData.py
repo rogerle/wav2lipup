@@ -152,7 +152,7 @@ def clear_data(inputdir):
                 bad_list.append(bad_line)
 
     train_list = clear_badv(train_list,bad_list)
-    test_list =clear_badv(test_list,bad_list)
+    test_list = clear_badv(test_list,bad_list)
     eval_list = clear_badv(eval_list,bad_list)
 
 
