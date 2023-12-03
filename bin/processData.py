@@ -169,7 +169,7 @@ def sync_data(inputdir):
     train_txt = inputdir + '/train.txt'
     test_txt = inputdir + '/test.txt'
     eval_txt = inputdir + '/eval.txt'
-    exclude_txt = inputdir + '/score.txt'
+    exclude_txt = inputdir + '/bad_off.txt'
     train_list = get_list(train_txt)
     test_list = get_list(test_txt)
     eval_list = get_list(eval_txt)

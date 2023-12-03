@@ -20,7 +20,7 @@ class W2LtrainTest(unittest.TestCase):
         Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
         disc_checkpoint_path = None
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        syncnet_checkpoint_path='../data/syncnet_checkpoint/sync_checkpoint_step000033000.pth'
+        syncnet_checkpoint_path='../data/syncnet_checkpoint/sync_checkpoint_step000370000.pth'
 
         train_dataset = FaceDataset(data_root, run_type='train', img_size=param.img_size)
         test_dataset = FaceDataset(data_root, run_type='eval', img_size=param.img_size)
@@ -36,10 +36,10 @@ class W2LtrainTest(unittest.TestCase):
         disc = Discriminator()
         syncnet = SyncNetModel()
         optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad],
-                               lr=param.init_learning_rate, betas=(0.5, 0.999))
+                               lr=float(param.init_learning_rate), betas=(0.5, 0.999))
 
         disc_optimizer = optim.Adam([p for p in disc.parameters() if p.requires_grad],
-                                    lr=param.disc_initial_learning_rate, betas=(0.5, 0.999))
+                                    lr=float(param.disc_initial_learning_rate), betas=(0.5, 0.999))
 
 
 
@@ -49,5 +49,5 @@ class W2LtrainTest(unittest.TestCase):
         # 装在sync_net
         syncnet, step, epoch = wl_train.load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
 
-        wl_train.train(device, model, disc, syncnet, train_data_loader, test_data_loader, optimizer, disc_optimizer,
-                        checkpoint_dir=checkpoint_dir, start_step=start_step, start_epoch=start_epoch)
+        wl_train.train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer,
+                        checkpoint_dir, 0, 0)
