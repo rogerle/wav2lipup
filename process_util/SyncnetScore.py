@@ -97,6 +97,8 @@ class SyncnetScore():
                 a, v = syncnet(mel, x)
                 d = F2.cosine_similarity(a, v)
                 dist.append(d)
+        dist = torch.tensor(dist,dtype=float)
+        dist = dist.view(10,-1)
         return
 
 
