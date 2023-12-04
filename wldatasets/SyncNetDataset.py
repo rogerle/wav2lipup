@@ -25,11 +25,11 @@ class SyncNetDataset(Dataset):
 
     def __getitem__(self, idx):
         img_dir = self.dirlist[idx]
-        #print('process imgs dir is {}'.format(img_dir))
+        #print('process imgs v_dir is {}'.format(img_dir))
         while 1:
             image_names = self.__get_imgs(img_dir)
             if image_names is None or len(image_names)==0:
-                print('dir is {} {} is empty'.format(idx,img_dir))
+                print('v_dir is {} {} is empty'.format(idx,img_dir))
                 continue
         #取图片进行训练
 
@@ -44,7 +44,7 @@ class SyncNetDataset(Dataset):
 
             mel = self.__get_segment_mel(img_dir,img_name)
             if mel.shape[0] != int(self.hp.syncnet_mel_step_size):
-                #print("mel's shape is {} ,dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,img_name))
+                #print("mel's shape is {} ,v_dir is {} {}，rechoose！！！".format(mel.shape[0],img_dir,img_name))
                 continue
 
             x = torch.tensor(x, dtype=torch.float)

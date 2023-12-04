@@ -2,6 +2,7 @@ import random
 from pathlib import Path
 
 import cv2
+import numpy
 import numpy as np
 import torchaudio
 import torch
@@ -18,17 +19,11 @@ from models.SyncNetModel import SyncNetModel
 
 
 class SyncnetScore():
-    def __init__(self, data_root, default_threshold, checkpoint_pth,filter_score):
-        self.data_root = data_root
-        self.dt = default_threshold
-        self.checkpoint_pth = checkpoint_pth
-        self.filter_score= float(filter_score)
-
-    def __load_checkpoint(self, model):
+    def __load_checkpoint(self,checkpoint_pth, model):
         if torch.cuda.is_available():
-            checkpoint = torch.load(self.checkpoint_pth)
+            checkpoint = torch.load(checkpoint_pth)
         else:
-            checkpoint = torch.load(self.checkpoint_pth, map_location=lambda storage, loc: storage)
+            checkpoint = torch.load(checkpoint_pth, map_location=lambda storage, loc: storage)
 
         s = checkpoint["state_dict"]
         new_s = {}
@@ -37,71 +32,69 @@ class SyncnetScore():
         model.load_state_dict(new_s)
 
         return model
-
-    def score_video(self):
-        root = self.data_root
-
-        dir_list = []
-        for dir in Path.rglob(Path(root), '*/*'):
-            if dir.is_dir():
-                dir_list.append(str(dir))
-
-        # 开始对每个目录评分
+    def score_video(self, v_file, **kwargs):
+        v_dir = kwargs['data_root'] + '/' + v_file
+        checkpoint = kwargs['checkpoint']
+        batch_size = kwargs['batch_size']
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        syncnet = SyncNetModel().to(device)
-        for p in syncnet.parameters():
+        model = SyncNetModel().to(device)
+        for p in model.parameters():
             p.requires_grad = False
-        syncnet = self.__load_checkpoint(syncnet)
-        Path(root+'/score.txt').write_text('')
+        model = self.__load_checkpoint(checkpoint, model)
+        score, conf = self.__score(v_dir, model, batch_size)
+        return v_file, score, conf
 
-        prog_bar = tqdm(enumerate(dir_list), total=len(dir_list), leave=False)
-        for i,dir in prog_bar:
-            score = self.__score(dir, syncnet)
-            if score is None:
-                continue
-            prog_bar.set_description('score the sync video:{}/{}'.format(dir,score))
-            parts = Path(dir).parts
-            if score > self.filter_score:
-                with open(root + '/score.txt', 'a') as f:
-                    f.write("{}/{}\n".format(parts[-2],parts[-1]))
-
-    def __score(self, dir, syncnet):
+    def __score(self, v_dir, model, batch_size):
         files = []
-        wavfile = dir + '/audio.wav'
-        for file in Path.glob(Path(dir), '**/*.jpg'):
+        wavfile = v_dir + '/audio.wav'
+        for file in Path.glob(Path(v_dir), '**/*.jpg'):
             if file.is_file():
                 img = file.stem
                 files.append(int(img))
         files.sort(key=int)
-        syncnet.eval()
+        model.eval()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        img_windows = self.__get_img_windows(dir,files)
+
+        #把图形文件名按batchsize做成batch
+        last_fname = len(files) - 5
         original_mel = self.__get_mel(wavfile)
-        aud_windows = self.__get_aud_windows(original_mel.copy(),files)
-        dist=[]
-        if len(img_windows)!=len(aud_windows):
-            return None
-        for i in range(5,len(img_windows)):
-            x = img_windows[i]
-            mel = aud_windows[i]
-            for j in range(i-5 if i >=5 else i,i+5):
-                if j>len(img_windows)-5:
-                    break
-                x = img_windows[i]
-                mel = aud_windows[j]
-                x = x.to(device)
-                mel = mel.to(device)
-                mel = mel.unsqueeze(0)
-                x = x.unsqueeze(0)
+        lip_feats = []
+        aud_feats = []
 
-                a, v = syncnet(mel, x)
-                d = F2.cosine_similarity(a, v)
-                dist.append(d)
-        dist = torch.tensor(dist,dtype=float)
-        dist = dist.view(10,-1)
-        return
+        for i in range(0, last_fname, batch_size):
+            lip_batch = []
+            aud_batch = []
+            for fname in range(i + 1, min(last_fname, i + batch_size)):
+                lip_win = self.__get_lipwin(v_dir, fname)
+                aud_win = self.__get_aud_windows(original_mel, fname)
+                lip_batch.append(lip_win)
+                aud_batch.append(aud_win)
+            lip_wins=torch.cat(lip_batch,0)
+            aud_wins=torch.cat(aud_batch,0)
+            x = lip_wins.to(device)
+            mel = aud_wins.to(device)
+            a, v = model(mel, x)
+            lip_feats.append(v.cpu())
+            aud_feats.append(a.cpu())
 
+        if len(lip_feats) != len(aud_feats):
+            return 15,15.
+        lip_feat = torch.cat(lip_feats,0)
+        aud_feat = torch.cat(aud_feats,0)
+        a_pad = F2.pad(aud_feat, (0, 0, 15, 15))
+        dists = []
+        for i in range(0, len(lip_feat)):
+            s_l = lip_feat[[i], :].repeat(31, 1)
+            s_a = a_pad[i:i + 31, :]
+            d = F2.cosine_similarity(s_a, s_l)
+            dists.append(d)
+        mdist = torch.mean(torch.stack(dists, 1), 1)
+        maxval, maxidx = torch.max(mdist, 0)
 
+        offset = 15 - maxidx.item()
+        conf = maxval - torch.median(mdist).item()
+
+        return offset, conf
 
     def __crop_audio_window(self, spec, start_frame):
         start_frame_num = start_frame
@@ -114,7 +107,7 @@ class SyncnetScore():
 
         return spec
 
-    def __get_mel(self,wavfile):
+    def __get_mel(self, wavfile):
         try:
             wavform, sf = torchaudio.load(wavfile)
 
@@ -138,42 +131,33 @@ class SyncnetScore():
             return None
         return orig_mel
 
-    def __get_img_windows(self,path, files):
-        windows=[]
-        for idx,fname in enumerate(files):
-            startid = fname
-            seekid = fname + 5
-            if startid > len(files)- 5:
-                break
-            window=[]
-            for fidx in range(startid,seekid):
-                img_name = path + '/' + '{}.jpg'.format(fidx)
+    def __get_lipwin(self, path, fname):
+        start_id = fname
+        seek_id = fname+5
+        window =[]
+        for fidx in range(start_id, seek_id):
+            img_name = path + '/' + '{}.jpg'.format(fidx)
+
+            try:
                 img_f = cv2.imread(img_name)
-                try:
-                    img_f = cv2.resize(img_f, (288, 288))
-                except Exception as e:
-                    print('image resize error:{}'.format(e))
-                window.append(img_f)
-            x = np.concatenate(window, axis=2) / 255.
-            x = x.transpose(2, 0, 1)
-            x = x[:, x.shape[1] // 2:]
-            x = torch.tensor(x, dtype=torch.float)
+                img_f = cv2.resize(img_f, (288, 288))
+            except Exception as e:
+                print('image resize error:{}'.format(e))
+                img_f = np.zeros((288, 288, 3))
+            window.append(img_f)
 
-            windows.append(x)
-        return windows
-
-    def __get_aud_windows(self, original_mel, files):
-        aud_windows=[]
-        for idx,fname in enumerate(files):
-            if fname > len(files)-5:
-                break
-            mel = self.__crop_audio_window(original_mel.copy(),fname)
-            if mel.shape[0]!=16:
-                continue
-            mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
-
-            aud_windows.append(mel)
-        return aud_windows
+        x = np.concatenate(window, axis=2) / 255.
+        x = x.transpose(2, 0, 1)
+        x = x[:, x.shape[1] // 2:]
+        x = torch.tensor(x, dtype=torch.float).unsqueeze(0)
 
 
+        return x
 
+    def __get_aud_windows(self, original_mel, fname):
+        mel = self.__crop_audio_window(original_mel.copy(), fname)
+        if mel.shape[0] != 16:
+            return torch.zeros(1,1,80,16)
+        mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0).unsqueeze(0)
+
+        return mel

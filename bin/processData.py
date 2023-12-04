@@ -9,7 +9,6 @@
 
 """
 import argparse
-import shutil
 from functools import partial
 from pathlib import Path, PurePath
 from torch import multiprocessing
@@ -48,6 +47,7 @@ def orignal_process(inputdir):
 def preProcess(inputdir, outputdir, preprocess_type):
     processer = PreProcessor()
     if preprocess_type == 'Time':
+
         processer.videosPreProcessByTime(s_time=5,
                                          input_dir=inputdir,
                                          output_dir=outputdir,
@@ -133,27 +133,43 @@ def train_file_write(inputdir):
 
 def clear_data(inputdir):
     train_txt = inputdir + '/train.txt'
+    test_txt = inputdir + '/test.txt'
+    eval_txt = inputdir + '/eval.txt'
     train_list = get_list(train_txt)
+    test_list = get_list(test_txt)
+    eval_list = get_list(eval_txt)
+    bad_list = []
     for line in tqdm(Path.glob(Path(inputdir), '*/*')):
         if line.is_dir():
             imgs = []
             for img in line.glob('**/*.jpg'):
                 if img.is_file():
-                    imgs.append(img)
-            if imgs is None or len(imgs) < 25 or len(imgs) % 25 != 0:
+                    imgs.append(int(img.stem))
+            if imgs is None or len(imgs) < 25 or len(imgs) < max(imgs):
                 print('delete empty or bad video!{}'.format(line))
                 dirs = line.parts
                 bad_line = str(dirs[-2] + '/' + dirs[-1])
-                train_list.remove(bad_line)
+                bad_list.append(bad_line)
 
+    train_list = clear_badv(train_list,bad_list)
+    test_list = clear_badv(test_list,bad_list)
+    eval_list = clear_badv(eval_list,bad_list)
+
+
+    with open(inputdir + '/bad_v.txt', 'w', encoding='utf-8') as fw:
+        fw.write("\n".join(bad_list))
     with open(inputdir + '/train.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(train_list))
+    with open(inputdir + '/test.txt', 'w', encoding='utf-8') as fw:
+        fw.write("\n".join(test_list))
+    with open(inputdir + '/eval.txt', 'w', encoding='utf-8') as fw:
+        fw.write("\n".join(eval_list))
 
 def sync_data(inputdir):
     train_txt = inputdir + '/train.txt'
     test_txt = inputdir + '/test.txt'
     eval_txt = inputdir + '/eval.txt'
-    exclude_txt = inputdir + '/score.txt'
+    exclude_txt = inputdir + '/bad_off.txt'
     train_list = get_list(train_txt)
     test_list = get_list(test_txt)
     eval_list = get_list(eval_txt)

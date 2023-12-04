@@ -30,6 +30,7 @@ for p in syncnet.parameters():
 syncnet_wt = param.syncnet_wt
 disc_wt = param.disc_wt
 
+
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     print("Load checkpoint from: {}".format(checkpoint_path))
 
@@ -71,19 +72,18 @@ def get_sync_loss(mel, g):
 
 
 def save_sample_images(x, g, gt, global_step, checkpoint_dir):
-    with LogWriter(logdir="../logs/wav2lip/sample_img") as writer:
-        x = (x.detach().cpu().numpy().transpose(0, 2, 3, 4, 1) * 255.).astype(np.uint8)
-        g = (g.detach().cpu().numpy().transpose(0, 2, 3, 4, 1) * 255.).astype(np.uint8)
-        gt = (gt.detach().cpu().numpy().transpose(0, 2, 3, 4, 1) * 255.).astype(np.uint8)
+    x = (x.detach().cpu().numpy().transpose(0, 2, 3, 4, 1) * 255.).astype(np.uint8)
+    g = (g.detach().cpu().numpy().transpose(0, 2, 3, 4, 1) * 255.).astype(np.uint8)
+    gt = (gt.detach().cpu().numpy().transpose(0, 2, 3, 4, 1) * 255.).astype(np.uint8)
 
-        refs, inps = x[..., 3:], x[..., :3]
-        folder = checkpoint_dir + "/samples_step_{:09d}".format(global_step)
-        Path(folder).mkdir(parents=True, exist_ok=True)
-        collage = np.concatenate((refs, inps, g, gt), axis=-2)
-        for batch_idx, c in enumerate(collage):
-            for t in range(len(c)):
-                cv2.imwrite('{}/{}_{}.jpg'.format(folder, batch_idx, t), c[t] / 255.)
-                writer.add_image('sample', c[t] / 255., step=global_step, dataformats='HWC')
+    refs, inps = x[..., 3:], x[..., :3]
+    folder = checkpoint_dir + "/samples_step_{:09d}".format(global_step)
+    Path(folder).mkdir(parents=True, exist_ok=True)
+    collage = np.concatenate((refs, inps, g, gt), axis=-2)
+    for batch_idx, c in enumerate(collage):
+        for t in range(len(c)):
+            cv2.imwrite('{}/{}_{}.jpg'.format(folder, batch_idx, t), c[t] / 255.)
+    return collage
 
 
 def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, prefix=''):
@@ -220,7 +220,10 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 running_disc_fake_loss += disc_fake_loss.item()
 
                 if global_step % checkpoint_interval == 0:
-                    save_sample_images(x, g, gt, global_step, checkpoint_dir)
+                    collage = save_sample_images(x, g, gt, global_step, checkpoint_dir)
+                    for batch_idx, c in enumerate(collage):
+                        for t in range(len(c)):
+                            writer.add_image(tag='train/sample', img=c[t] / 255., step=global_step, dataformats='HWC')
 
                 global_step += 1
 
@@ -243,7 +246,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 if global_step % eval_interval == 0:
                     with torch.no_grad():
                         average_sync_loss = eval_model(test_data_loader, model, disc, global_step)
-                        writer.add_scalar(tag='eval/loss', step=global_step, value=average_sync_loss)
+                        writer.add_scalar(tag='train/eval_loss', step=global_step, value=average_sync_loss)
                         if average_sync_loss < .75:
                             syncnet_wt = 0.03
 
@@ -257,7 +260,6 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 writer.add_scalar(tag='train/Percep_loss', step=global_step, value=running_perceptual_loss / (step + 1))
                 writer.add_scalar(tag='train/Real_loss', step=global_step, value=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/Fake_loss', step=global_step, value=running_disc_fake_loss / (step + 1))
-
 
             epoch += 1
 
@@ -306,7 +308,7 @@ def main():
                                                         reset_optimizer=False)
 
     # 装在sync_net
-    load_checkpoint(syncnet_checkpoint_path, syncnet,None, reset_optimizer=True)
+    load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
 
     torch.multiprocessing.set_start_method('spawn')
     train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer,

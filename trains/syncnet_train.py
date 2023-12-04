@@ -119,7 +119,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                 if global_step % eval_interval == 0:
                     with torch.no_grad():
                         eval_loss=eval_model(val_dataloader, global_step, device, model)
-                        writer.add_scalar(tag='eval/loss', step=global_step, value=eval_loss)
+                        writer.add_scalar(tag='train/eval_loss', step=global_step, value=eval_loss)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, numepochs))
                 prog_bar.set_postfix(train_loss=running_loss / (step + 1), step=step + 1, gloab_step=global_step)
