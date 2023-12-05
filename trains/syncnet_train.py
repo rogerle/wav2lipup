@@ -93,7 +93,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
         while epoch < numepochs:
             running_loss = 0
             prog_bar = tqdm(enumerate(train_dataloader), total=len(train_dataloader), leave=False)
-
+            lr = optimizer.state_dict()['param_groups'][0]['lr']
             for step, (x, mel, y) in prog_bar:
                 model.train()
                 optimizer.zero_grad()
@@ -122,7 +122,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                         writer.add_scalar(tag='train/eval_loss', step=global_step, value=eval_loss)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, numepochs))
-                prog_bar.set_postfix(train_loss=running_loss / (step + 1), step=step + 1, gloab_step=global_step)
+                prog_bar.set_postfix(train_loss=running_loss / (step + 1), step=step + 1, gloab_step=global_step,lr=lr)
                 writer.add_scalar(tag='train/step_loss', step=global_step, value=running_loss / (step + 1))
             #自动调整lr，在40和100个epoch时自动调整
             scheduler.step()
