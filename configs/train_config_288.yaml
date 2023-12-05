@@ -57,7 +57,7 @@ train_config:
   #####################################sycnet parameters##########################################
 
   syncnet_batch_size: 64
-  syncnet_learning_rate: 1e-3
+  syncnet_learning_rate: 1e-5
   syncnet_checkpoint_interval: 1000
   syncnet_eval_interval: 1000
   syncnet_iepoch: 40
