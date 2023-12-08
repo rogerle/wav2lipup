@@ -10,9 +10,9 @@ train_config:
   # For 16000Hz, 200 = 12.5 ms (0.0125 * sample_rate)
   # For 16000Hz, 800 = 50 ms (If None, win_size = n_fft) (0.05 * sample_rate)
   # 16000Hz (corresponding to librispeech) (sox --i <filename>)
-  n_fft: 850
+  n_fft: 800
   hop_size: 200
-  win_size: 850
+  win_size: 800
   sample_rate: 16000
   # Can replace hop_size parameter. (Recommended: 12.5)
   frame_shift_ms: None
