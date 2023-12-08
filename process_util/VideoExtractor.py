@@ -41,6 +41,7 @@ class VideoExtractor():
         ffmpeg_cmd = 'ffmpeg -loglevel error -y -i {} -async 1 -ac 1 -vn -acodec pcm_s16le -ar 16000 {}/{}'.format(
             output_dir + '/' + tmp_video_name, extract_dir, 'audio.wav')
         output = subprocess.call(ffmpeg_cmd, shell=True, stdout=None)
+        os.unlink(output_dir+'/'+tmp_video_name)
         st = time.time()
         print('process the video file {} cost {:.2f}s'.format(tmp_video_name, st - s))
         return output_dir
@@ -61,13 +62,14 @@ class VideoExtractor():
                 frames.append(int(frame.stem))
         frames.sort(key=int)
         bad_f_l = len(frames) % 25
-        face_list = []
+        frames = frames[:-bad_f_l]
         sc = 1
         j = 0
         face_files = []
         start_frame = frames[0]
         end_frame = 0
-        probar = tqdm(enumerate(frames), total=(len(frames) - bad_f_l), leave=False)
+        face_flag = 0
+        probar = tqdm(enumerate(frames), total=len(frames), leave=False)
         for idx, frame in probar:
             j += 1
             frame = video_path + '/frames/' + '{}.jpg'.format(idx + 1)
@@ -77,36 +79,37 @@ class VideoExtractor():
             face_result = self.face_detector.faceDetec(img)
             scores = face_result['scores']
             boxes = face_result['boxes']
-            end_frame = idx+1
             if scores is None or len(scores) == 0:
-                if face_list is not None:
-                    face_file = self.__write_face_file(face_list, sc, video_path, start_frame, end_frame)
-                    face_files.append(face_file)
-                sc += 1
+                if start_frame < end_frame:
+                    aud_file = self.__write_aud_file(sc, video_path, start_frame, end_frame)
+                    face_files.append('sc_{}'.format(sc))
+                    start_frame = end_frame
+                if face_flag == 0:
+                    sc += 1
+                    face_flag = 1
                 j = 0
-                face_list = {}
-                start_frame = end_frame
                 continue
             else:
-                idx = scores.index(max(scores))
-                box = boxes[idx]
+                face_flag=0
+                end_frame = idx + 1
+                idx_s = scores.index(max(scores))
+                box = boxes[idx_s]
                 x1, y1, x2, y2 = box
-                face = [x1-110,y1-110,x2+110,y2+110]
-                face_list.append({'id': j, 'face': face})
-
-        face_file = self.__write_face_file(face_list, sc, video_path, start_frame, end_frame)
-        face_files.append(face_file)
+                face = img[max(int(y1)-110,0):min(int(y2)+110,y_max),max(int(x1)-110,0):min(int(x2)+110,x_max)]
+                face_path = video_path + '/' + 'sc_{}'.format(sc)
+                Path(face_path).mkdir(exist_ok=True,parents=True)
+                cv2.imwrite(face_path+'/{}.jpg'.format(j),face)
+        aud_file = self.__write_aud_file(sc, video_path, start_frame, end_frame)
+        face_files.append('sc_{}'.format(sc))
         return face_files
 
-    def __write_face_file(self, face_list, sc, vid_path, start_frame, end_frame):
-        face_file = vid_path + '/' + 'face_{}'.format(sc) + '.pkl'
-        with open(face_file, 'wb') as f:
-            pickle.dump(face_list, f)
+    def __write_aud_file(self, sc, vid_path, start_frame, end_frame):
 
         aud_start = int(start_frame) / 25
         aud_end = int(end_frame) / 25
-        aud_file = vid_path + '/' + 'aud_{}'.format(sc) + '.wav'
+        Path(vid_path).mkdir(exist_ok=True, parents=True)
+        aud_file = vid_path + '/' + 'sc_{}/audio_sc{}'.format(sc,sc) + '.wav'
         ffmpeg_cmd = 'ffmpeg -loglevel error -y -i {} -ss {:.3f} -to {:.3f} {}'.format(vid_path + '/frames/audio.wav',
                                                                                        aud_start, aud_end, aud_file)
         output = subprocess.call(ffmpeg_cmd, shell=True, stdout=None)
-        return face_file
+        return aud_file
