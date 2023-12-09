@@ -60,8 +60,8 @@ train_config:
   syncnet_learning_rate: 1e-5
   syncnet_checkpoint_interval: 1000
   syncnet_eval_interval: 1000
-  syncnet_iepoch: 40
-  syncnet_mepoch: 100
+  syncnet_iepoch: 500
+  syncnet_mepoch: 1000
   #####################################Disc parameters##########################################
   disc_wt: 0.07
   disc_initial_learning_rate: 1e-5
