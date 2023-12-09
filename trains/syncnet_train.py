@@ -87,7 +87,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
     numepochs = param.epochs
     checkpoint_interval = param.syncnet_checkpoint_interval
     eval_interval = param.syncnet_eval_interval
-    scheduler = MultiStepLR(optimizer,milestones=[param.syncnet_iepoch,param.syncnet_mepoch],gamma=0.5)
+    scheduler = MultiStepLR(optimizer,milestones=[int(param.syncnet_iepoch),int(param.syncnet_mepoch)],gamma=0.5)
 
     with LogWriter(logdir="../logs/syncnet_train/train") as writer:
         while epoch < numepochs:
