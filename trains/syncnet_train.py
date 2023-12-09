@@ -41,7 +41,7 @@ def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     step = checkpoint["global_step"]
     epoch = checkpoint["global_epoch"]
 
-    return model, step, epoch
+    return model, step, epoch,optimizer
 
 
 def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
@@ -161,7 +161,7 @@ def main():
     start_epoch = 0
 
     if checkpoint_path is not None:
-        model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
+        model, start_step, start_epoch,optimizer = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
 
     train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir, start_step, start_epoch)
 
