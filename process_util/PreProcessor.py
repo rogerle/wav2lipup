@@ -58,6 +58,7 @@ class PreProcessor():
                 else:
                     continue
                 start = tmpEnd
+        return outputD
 
     '''
         把视频按时间戳文件进行切割
@@ -80,6 +81,8 @@ class PreProcessor():
                 endTime = movieEnd
             self.__genClipVideo(videoC, startTime, endTime, outputD)
             i = i + S_TIME
+
+        return outputD
     '''
         切割视频文件写入到指定目录
     '''
@@ -89,7 +92,7 @@ class PreProcessor():
                                                     startTime,
                                                     endTime)
         clipVideo = videoClip.subclip(startTime, endTime)
-        clipVideo.write_videofile(outputName,fps=25)
+        clipVideo.write_videofile(outputName,fps=25,logger=None)
 
     '''
         处理文件后的输出目录生成并返回目录名称
