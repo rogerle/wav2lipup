@@ -45,10 +45,10 @@ train_config:
   img_size: 288
   fps: 25
 
-  batch_size: 16
+  batch_size: 2
   init_learning_rate: 1e-5
   epochs: 1000000000
-  num_works: 8
+  num_works: 4
   checkpoint_interval: 1000
   eval_interval: 1000
   save_optimizer_state: True
@@ -56,8 +56,8 @@ train_config:
 
   #####################################sycnet parameters##########################################
 
-  syncnet_batch_size: 64
-  syncnet_learning_rate: 1e-5
+  syncnet_batch_size: 128
+  syncnet_learning_rate: 1e-6
   syncnet_checkpoint_interval: 1000
   syncnet_eval_interval: 1000
   syncnet_iepoch: 500

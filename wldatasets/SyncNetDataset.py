@@ -21,7 +21,6 @@ class SyncNetDataset(Dataset):
         self.data_dir = data_dir
         self.run_type = run_type
         self.dirlist = self.__get_split_video_list()
-        self.img_size = kwargs['img_size']
 
     def __getitem__(self, idx):
         img_dir = self.dirlist[idx]
@@ -83,7 +82,7 @@ class SyncNetDataset(Dataset):
                 return None
             try:
                 img = cv2.imread(frame)
-                img = cv2.resize(img, (self.img_size, self.img_size))
+                img = cv2.resize(img, (self.hp.img_size, self.hp.img_size))
             except Exception as e:
                 return None
             window_frames.append(img)
@@ -140,10 +139,11 @@ class SyncNetDataset(Dataset):
             spec = None
 
         return spec
-    def __normalization(self,S):
+"""   def __normalization(self,S):
         if self.hp.allow_clipping_in_normalization:
             if self.hp.symmetric_mels:
                 return np.clip((2 * self.hp.max_abs_value) * ((S - self.hp.min_level_db) / (-self.hp.min_level_db)) - self.hp.max_abs_value,
                                -self.hp.max_abs_value, self.hp.max_abs_value)
             else:
                 return np.clip(self.hp.max_abs_value * ((S - self.hp.min_level_db) / (-self.hp.min_level_db)), 0, self.hp.max_abs_value)
+"""

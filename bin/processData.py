@@ -46,16 +46,20 @@ def orignal_process(inputdir):
 
 def preProcess(inputdir, outputdir, preprocess_type):
     processer = PreProcessor()
-    if preprocess_type == 'Time':
-
-        processer.videosPreProcessByTime(s_time=5,
-                                         input_dir=inputdir,
-                                         output_dir=outputdir,
-                                         ext='mp4')
-    else:
-        processer.videosPreProcessByASR(input_dir=inputdir,
-                                        output_dir=outputdir,
-                                        ext='mp4')
+    videos = get_video_fils(inputdir,'mp4')
+    probar = tqdm(enumerate(videos),total=len(videos),leave=False)
+    for i,video in probar:
+        if preprocess_type == 'Time':
+            processer.videosPreProcessByTime(video,
+                                             s_time=5,
+                                             input_dir=inputdir,
+                                             output_dir=outputdir,
+                                             )
+        else:
+            processer.videosPreProcessByASR(video,
+                                            input_dir=inputdir,
+                                            output_dir=outputdir)
+        probar.set_description('Processed video: {}'.format(video))
 
 
 def get_processed_files(inputdir, outputdir):
@@ -204,6 +208,15 @@ def clear_badv(all_list, exclude_list):
 
     return all_list
 
+def get_video_fils(input_dir, type):
+    inputPath = input_dir
+    fileType = type
+    files = []
+    for file in Path.glob(Path(inputPath), '**/*.{}'.format(fileType)):
+        if file.is_file():
+            files.append(file)
+    files.sort()
+    return files
 
 def main():
     args = parse_args()

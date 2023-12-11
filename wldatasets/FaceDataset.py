@@ -42,19 +42,28 @@ class FaceDataset(Dataset):
 
             # 获取连续5张脸，正确和错误的
             img_name, wrong_img_name = self.__get_choosen(image_names)
-            window = self.__get_window(img_name,img_dir)
-            wrong_window = self.__get_window(wrong_img_name,img_dir)
-            if window is None or wrong_window is None:
+            window_fnames = self.__get_window(img_name,img_dir)
+            wrong_window_fnames = self.__get_window(wrong_img_name,img_dir)
+            if window_fnames is None or wrong_window_fnames is None:
+                continue
+
+            window = self.__read_window(window_fnames)
+            if window is None:
+                continue
+            wrong_window = self.__read_window(wrong_window_fnames)
+            if wrong_window is None:
                 continue
 
             # 对音频进行mel图谱化，并进行对应。
             orginal_mel = self.__get_orginal_mel(img_dir)
+            if orginal_mel is None:
+                continue
 
             mel = self.__crop_audio_window(orginal_mel.copy(),int(img_name))
             if mel is None or mel.shape[0] != self.hp.syncnet_mel_step_size:
                 continue
 
-            indiv_mels = self.__getsegmented_mels(orginal_mel.copy(), img_name)
+            indiv_mels = self.__get_segmented_mels(orginal_mel.copy(), img_name)
 
             if indiv_mels is None:
                 continue
@@ -114,14 +123,9 @@ class FaceDataset(Dataset):
         window_frames = []
         for frame_id in range(start_id, seek_id):
             frame = vidPath + '/{}.jpg'.format(frame_id)
-            if Path(frame).exists() is False:
+            if not Path(frame).exists():
                 return None
-            try:
-                img = cv2.imread(frame)
-                img = cv2.resize(img, (self.img_size, self.img_size))
-            except Exception as e:
-                return None
-            window_frames.append(img)
+            window_frames.append(frame)
         return window_frames
 
     def __read_window(self, window_fnames):
@@ -159,7 +163,7 @@ class FaceDataset(Dataset):
 
         return spec
 
-    def __getsegmented_mels(self, spec, image_name):
+    def __get_segmented_mels(self, spec, image_name):
         mels = []
         start_frame_num = int(Path(image_name).stem) + 1
         if start_frame_num - 2 < 0:

@@ -21,82 +21,65 @@ class PreProcessor():
         利用ASR对音频文件进行时间戳分离，并写入相同文件名的json文件,然后根据时间戳对视频进行分割处理
     '''
 
-    def videosPreProcessByASR(self, **kwargs):
+    def videosPreProcessByASR(self,video,**kwargs):
         input_dir = kwargs.get('input_dir')
         output_dir = kwargs.get('output_dir')
-        ext = kwargs.get('ext')
-
-        videoFiles = self.__getProcessFils(input_dir=input_dir,
-                                           type=ext)
         asr_func = pipeline(task=Tasks.auto_speech_recognition,
                             model=self.model_id)
-        print('Total process {} files'.format(len(videoFiles)))
-        prog_bar = tqdm(enumerate(videoFiles), total=len(videoFiles), leave=False)
-        for i, video in prog_bar:
-            # 看是否已经有时间戳，没有的话就做时间戳文件
-            parentPath = Path(video).parent
-            filename = Path(video).stem
-            jsonfile = Path.joinpath(parentPath, filename).with_suffix('.json')
-            print('generate the viedo asr file:{}'.format(jsonfile))
-            self.__genTimeStampByASR(video=video,
-                                     asr=asr_func)
-            with open(jsonfile, 'r') as f:
-                dicts = json.load(f)
-            timestamps = dicts['timestamps']
-            start = 0
-            videoC = VideoFileClip(str(video))
-            movieEnd = int(videoC.duration)
-            outputD = self.__genOutputDir(input_dir,
-                                          output_dir,
-                                          video)
-            for time in timestamps:
-                tmpEnd = time['end']
-                if time['start'] != start:
-                    start = time['start']
-                if (tmpEnd - start) < 1000:
-                    continue
+        # 看是否已经有时间戳，没有的话就做时间戳文件
+        parent_path = Path(video).parent
+        file_name = Path(video).stem
+        jsonfile = Path.joinpath(parent_path, file_name).with_suffix('.json')
+        print('generate the viedo asr file:{}'.format(jsonfile))
+        self.__genTimeStampByASR(video=video,
+                                 asr=asr_func)
+        with open(jsonfile, 'r') as f:
+            dicts = json.load(f)
+        timestamps = dicts['timestamps']
+        start = 0
+        videoC = VideoFileClip(str(video))
+        movieEnd = int(videoC.duration)
+        outputD = self.__genOutputDir(input_dir,
+                                      output_dir,
+                                      video)
+        for time in timestamps:
+            tmpEnd = time['end']
+            if time['start'] != start:
+                start = time['start']
+            if (tmpEnd - start) < 1000:
+                continue
+            else:
+                startTime = round(start / 1000)
+                endTime = round(tmpEnd / 1000)
+                if endTime > movieEnd:
+                    endTime = movieEnd
+                if endTime > startTime:
+                    self.__genClipVideo(videoC, startTime, endTime, outputD)
                 else:
-                    startTime = round(start / 1000)
-                    endTime = round(tmpEnd / 1000)
-                    if endTime > movieEnd:
-                        endTime = movieEnd
-                    if endTime > startTime:
-                        self.__genClipVideo(videoC, startTime, endTime, outputD)
-                    else:
-                        continue
-                    start = tmpEnd
-            # 最后结尾的小段截出来
-
-            prog_bar.set_description('Split video files {}/{}'.format(i, len(videoFiles)))
+                    continue
+                start = tmpEnd
 
     '''
         把视频按时间戳文件进行切割
     '''
 
-    def videosPreProcessByTime(self, **kwargs):
+    def videosPreProcessByTime(self, video,**kwargs):
         S_TIME = kwargs.get('s_time')
         input_dir = kwargs.get('input_dir')
         output_dir = kwargs.get('output_dir')
-        ext = kwargs.get('ext')
+        outputD = self.__genOutputDir(input_dir, output_dir, video)
+        i = 0
+        videoC = VideoFileClip(str(video))
+        movieEnd = int(videoC.duration)
 
-        videos = self.__getProcessFils(input_dir, ext)
-        prog_bar = tqdm(enumerate(videos), total=len(videos), leave=False)
-        for j, video in prog_bar:
-            outputD = self.__genOutputDir(input_dir, output_dir, video)
-            i = 0
-            videoC = VideoFileClip(str(video))
-            movieEnd = int(videoC.duration)
-
-            # 按秒数来分割视频，最后一段到结束
-            while i < movieEnd:
-                startTime = i
-                endTime = i + S_TIME
-                if endTime > movieEnd:
-                    endTime = movieEnd
-                self.__genClipVideo(videoC, startTime, endTime, outputD)
-                i = i + S_TIME
-            prog_bar.set_description('Split video files {}/{}'.format(i, len(videos)))
-
+        # 按秒数来分割视频，最后一段到结束
+        while i < movieEnd:
+            startTime = i
+            endTime = i + S_TIME
+            if endTime > movieEnd:
+                endTime = movieEnd
+            self.__genClipVideo(videoC, startTime, endTime, outputD)
+            i = i + S_TIME
     '''
         切割视频文件写入到指定目录
     '''
@@ -136,15 +119,7 @@ class PreProcessor():
         获取所有处理文件，并返回文件列表，type是文件的扩展名，也是文件的类型，内部私有方法
     '''
 
-    def __getProcessFils(self, input_dir, type):
-        inputPath = input_dir
-        fileType = type
-        files = []
-        for file in Path.glob(Path(inputPath), '**/*.{}'.format(fileType)):
-            if file.is_file():
-                files.append(file)
-        files.sort()
-        return files
+
 
     '''
         把视频文件的音频剥离出来

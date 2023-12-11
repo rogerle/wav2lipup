@@ -27,8 +27,6 @@ syncnet = SyncNetModel().to(device)
 for p in syncnet.parameters():
     p.requires_grad = False
 
-syncnet_wt = param.syncnet_wt
-disc_wt = param.disc_wt
 
 
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
@@ -164,7 +162,9 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
     numepochs = param.epochs
     checkpoint_interval = param.checkpoint_interval
     eval_interval = param.eval_interval
+    syncnet_wt = float(param.syncnet_wt)
 
+    disc_wt = float(param.disc_wt)
     with LogWriter(logdir="../logs/wav2lip/train") as writer:
         while epoch < numepochs:
             running_sync_loss, running_l1_loss, disc_loss, running_perceptual_loss = 0., 0., 0., 0.
@@ -173,7 +173,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
             for step, (x, indiv_mels, mel, gt) in prog_bar:
                 disc.train()
                 model.train()
-                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
                 x = x.to(device)
                 mel = mel.to(device)
