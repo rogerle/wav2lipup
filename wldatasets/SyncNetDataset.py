@@ -139,11 +139,3 @@ class SyncNetDataset(Dataset):
             spec = None
 
         return spec
-"""   def __normalization(self,S):
-        if self.hp.allow_clipping_in_normalization:
-            if self.hp.symmetric_mels:
-                return np.clip((2 * self.hp.max_abs_value) * ((S - self.hp.min_level_db) / (-self.hp.min_level_db)) - self.hp.max_abs_value,
-                               -self.hp.max_abs_value, self.hp.max_abs_value)
-            else:
-                return np.clip(self.hp.max_abs_value * ((S - self.hp.min_level_db) / (-self.hp.min_level_db)), 0, self.hp.max_abs_value)
-"""

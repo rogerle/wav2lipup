@@ -54,19 +54,22 @@ class Discriminator(nn.Module):
         false_feats = false_face_sequences
         for f in self.face_encoder_blocks:
             false_feats = f(false_feats)
-
-        false_pred_loss = F.binary_cross_entropy(self.binary_pred(false_feats).view(len(false_feats), -1),
-                                                 torch.ones((len(false_feats), 1)).cuda())
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if device == 'cuda':
+            false_pred_loss = F.binary_cross_entropy(self.binary_pred(false_feats).view(len(false_feats), -1),
+                                                     torch.ones((len(false_feats), 1)).to(device))
+        else:
+            false_pred_loss = F.binary_cross_entropy(self.binary_pred(false_feats).view(len(false_feats), -1),
+                                                     torch.ones((len(false_feats), 1)))
 
         return false_pred_loss
 
-
     def forward(self, face_sequences):
-            face_sequences = self.to_2d(face_sequences)
-            face_sequences = self.get_lower_half(face_sequences)
+        face_sequences = self.to_2d(face_sequences)
+        face_sequences = self.get_lower_half(face_sequences)
 
-            x = face_sequences
-            for f in self.face_encoder_blocks:
-                x = f(x)
+        x = face_sequences
+        for f in self.face_encoder_blocks:
+            x = f(x)
 
-            return self.binary_pred(x).view(len(x), -1)
+        return self.binary_pred(x).view(len(x), -1)

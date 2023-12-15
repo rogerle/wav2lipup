@@ -18,7 +18,7 @@ from process_util.DataProcessor import DataProcessor
 from process_util.PreProcessor import PreProcessor
 from sklearn.model_selection import train_test_split
 import logging
-logging.basicConfig(level=logging.ERROR)
+
 
 def orignal_process(inputdir):
     dirs = []
@@ -220,6 +220,7 @@ def get_video_fils(input_dir, type):
     return files
 
 def main():
+    logging.basicConfig(level=logging.ERROR)
     args = parse_args()
     data_root = args.data_root
     p_step = args.process_step

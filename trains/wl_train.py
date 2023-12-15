@@ -16,14 +16,25 @@ from models.SyncNetModel import SyncNetModel
 from process_util.ParamsUtil import ParamsUtil
 from wldatasets.FaceDataset import FaceDataset
 
-
 # 判断是否使用gpu
+
+param = ParamsUtil()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+syncnet_wt = float(param.syncnet_wt)
+
+syncnet = SyncNetModel().to(device)
+for p in syncnet.parameters():
+    p.requires_grad = False
+
+logloss = nn.BCELoss()
+recon_loss = nn.L1Loss()
 
 
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     print("Load checkpoint from: {}".format(checkpoint_path))
 
-    if torch.cuda.is_available():
+    if device == 'cuda':
         checkpoint = torch.load(checkpoint_path)
     else:
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
@@ -45,15 +56,12 @@ def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
 
 
 def cosine_loss(a, v, y):
-    logloss = nn.BCELoss()
     d = nn.functional.cosine_similarity(a, v)
     loss = logloss(d.unsqueeze(1), y)
-
     return loss
 
 
-def get_sync_loss(mel, g, syncnet, param):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def get_sync_loss(mel, g):
     g = g[:, :, :, g.size(3) // 2:]
     g = torch.cat([g[:, :, i] for i in range(param.syncnet_T)], dim=1)
     # B, 3 * T, H//2, W
@@ -77,7 +85,7 @@ def save_sample_images(x, g, gt, global_step, checkpoint_dir):
     return collage
 
 
-def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, param, prefix=''):
+def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, prefix=''):
     checkpoint_path = checkpoint_dir + "/{}checkpoint_step{:09d}.pth".format(prefix, global_step)
     optimizer_state = optimizer.state_dict() if param.save_optimizer_state else None
     torch.save({
@@ -89,16 +97,15 @@ def save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, param,
     print("Saved checkpoint:", checkpoint_path)
 
 
-def eval_model(test_data_loader, model, disc, syncnet, global_step, param):
+def eval_model(test_data_loader, model, disc):
     eval_steps = 300
     print('Evaluating for {} steps:'.format(eval_steps))
     running_sync_loss, running_l1_loss, running_disc_real_loss, running_disc_fake_loss, running_perceptual_loss = [], [], [], [], []
-    recon_loss = nn.L1Loss()
     while 1:
-        for step, (x, indiv_mels, mel, gt) in enumerate((test_data_loader)):
+        for step, (x, indiv_mels, mel, gt) in enumerate(test_data_loader):
             model.eval()
             disc.eval()
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
             x = x.to(device)
             mel = mel.to(device)
             indiv_mels = indiv_mels.to(device)
@@ -114,7 +121,7 @@ def eval_model(test_data_loader, model, disc, syncnet, global_step, param):
             running_disc_real_loss.append(disc_real_loss.item())
             running_disc_fake_loss.append(disc_fake_loss.item())
 
-            sync_loss = get_sync_loss(mel=mel, g=g, syncnet=syncnet, param=param)
+            sync_loss = get_sync_loss(mel=mel, g=g)
 
             if param.disc_wt > 0.:
                 perceptual_loss = disc.perceptual_forward(g)
@@ -148,18 +155,16 @@ def eval_model(test_data_loader, model, disc, syncnet, global_step, param):
         return eval_loss
 
 
-def train(model, disc, syncnet, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
-          start_step, start_epoch, param):
+def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
+          start_step, start_epoch):
     global_step = start_step
     epoch = start_epoch
-    numepochs = param.epochs
+    num_epochs = param.epochs
     checkpoint_interval = param.checkpoint_interval
     eval_interval = param.eval_interval
-    recon_loss = nn.L1Loss()
-    syncnet_wt = float(param.syncnet_wt)
 
     with LogWriter(logdir="../logs/wav2lip/train") as writer:
-        while epoch < numepochs:
+        while epoch < num_epochs:
             running_sync_loss, running_l1_loss, disc_loss, running_perceptual_loss = 0., 0., 0., 0.
             running_disc_real_loss, running_disc_fake_loss = 0., 0.
             prog_bar = tqdm(enumerate(train_data_loader), total=len(train_data_loader), leave=False)
@@ -167,7 +172,6 @@ def train(model, disc, syncnet, train_data_loader, test_data_loader, optimizer, 
                 disc.train()
                 model.train()
 
-                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 x = x.to(device)
                 mel = mel.to(device)
                 indiv_mels = indiv_mels.to(device)
@@ -179,7 +183,7 @@ def train(model, disc, syncnet, train_data_loader, test_data_loader, optimizer, 
                 g = model(indiv_mels, x)
 
                 if syncnet_wt > 0.:
-                    sync_loss = get_sync_loss(mel, g, syncnet, param)
+                    sync_loss = get_sync_loss(mel, g)
                 else:
                     sync_loss = 0.
 
@@ -232,17 +236,17 @@ def train(model, disc, syncnet, train_data_loader, test_data_loader, optimizer, 
                     running_perceptual_loss += 0.
 
                 if global_step == 1 or global_step % checkpoint_interval == 0:
-                    save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch, param)
-                    save_checkpoint(disc, disc_optimizer, global_step, checkpoint_dir, epoch, param, prefix='disc_')
+                    save_checkpoint(model, optimizer, global_step, checkpoint_dir, epoch)
+                    save_checkpoint(disc, disc_optimizer, global_step, checkpoint_dir, epoch, prefix='disc_')
 
                 if global_step % eval_interval == 0:
                     with torch.no_grad():
-                        average_sync_loss = eval_model(test_data_loader, model, disc, syncnet, param, global_step)
+                        average_sync_loss = eval_model(test_data_loader, model, disc)
                         writer.add_scalar(tag='train/eval_loss', step=global_step, value=average_sync_loss)
                         if average_sync_loss < .75:
-                            syncnet_wt = 0.03
+                            param.set_param('syncnet_wt', 0.3)
 
-                prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, numepochs))
+                prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, num_epochs))
                 prog_bar.set_postfix(Step=global_step, L1=running_l1_loss / (step + 1),
                                      Sync=running_sync_loss / (step + 1),
                                      Percep=running_perceptual_loss / (step + 1),
@@ -257,7 +261,6 @@ def train(model, disc, syncnet, train_data_loader, test_data_loader, optimizer, 
 
 
 def main():
-    param = ParamsUtil()
     args = parse_args()
 
     # 创建checkpoint目录
@@ -273,19 +276,13 @@ def main():
     test_dataset = FaceDataset(args.data_root, run_type='eval', img_size=param.img_size)
 
     train_data_loader = DataLoader(train_dataset, batch_size=param.batch_size, shuffle=True,
-                                   num_workers=param.num_works, drop_last=True)
+                                   num_workers=param.num_works)
 
-    test_data_loader = DataLoader(test_dataset, batch_size=2,
+    test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
                                   num_workers=8)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = FaceCreator().to(device)
     disc = Discriminator().to(device)
-
-    syncnet = SyncNetModel().to(device)
-    for p in syncnet.parameters():
-        p.requires_grad = False
 
     print('total trainable params {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print('total DISC trainable params {}'.format(sum(p.numel() for p in disc.parameters() if p.requires_grad)))
@@ -304,11 +301,11 @@ def main():
         disc, start_step, start_epoch = load_checkpoint(disc_checkpoint_path, disc, disc_optimizer,
                                                         reset_optimizer=False)
 
-        # 装在sync_net
-        syncnet, s_s, s_e = load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
+    # 装在sync_net
+    load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
 
-    train(model, disc, syncnet, train_data_loader, test_data_loader, optimizer, disc_optimizer,
-          checkpoint_dir=checkpoint_dir, start_step=start_step, start_epoch=start_epoch, param=param)
+    train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer,
+          checkpoint_dir=checkpoint_dir, start_step=start_step, start_epoch=start_epoch)
 
 
 def parse_args():
