@@ -41,7 +41,7 @@ def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     step = checkpoint["global_step"]
     epoch = checkpoint["global_epoch"]
 
-    return model, step, epoch
+    return model, step, epoch,optimizer
 
 
 def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
@@ -87,7 +87,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
     numepochs = param.epochs
     checkpoint_interval = param.syncnet_checkpoint_interval
     eval_interval = param.syncnet_eval_interval
-    scheduler = MultiStepLR(optimizer,milestones=[param.syncnet_iepoch,param.syncnet_mepoch],gamma=0.1)
+    #scheduler = MultiStepLR(optimizer,milestones=[int(param.syncnet_iepoch),int(param.syncnet_mepoch)],gamma=0.1)
 
     with LogWriter(logdir="../logs/syncnet_train/train") as writer:
         while epoch < numepochs:
@@ -125,7 +125,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                 prog_bar.set_postfix(train_loss=running_loss / (step + 1), step=step + 1, gloab_step=global_step,lr=lr)
                 writer.add_scalar(tag='train/step_loss', step=global_step, value=running_loss / (step + 1))
             #自动调整lr，在40和100个epoch时自动调整
-            scheduler.step()
+            #scheduler.step()
             epoch += 1
 
 
@@ -139,8 +139,8 @@ def main():
 
     Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
 
-    train_dataset = SyncNetDataset(args.data_root, run_type=train_type, img_size=288)
-    val_dataset = SyncNetDataset(args.data_root, run_type='eval', img_size=288)
+    train_dataset = SyncNetDataset(args.data_root, run_type=train_type)
+    val_dataset = SyncNetDataset(args.data_root, run_type='eval')
 
     train_dataloader = DataLoader(train_dataset, batch_size=param.syncnet_batch_size, shuffle=True,
                                   num_workers=param.num_works)
@@ -161,7 +161,7 @@ def main():
     start_epoch = 0
 
     if checkpoint_path is not None:
-        model, start_step, start_epoch = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
+        model, start_step, start_epoch,optimizer = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=True)
 
     train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir, start_step, start_epoch)
 
@@ -173,7 +173,7 @@ def parse_args():
     parser.add_argument("--data_root", help='Root folder of the preprocessed dataset', required=True)
     parser.add_argument("--checkpoint_dir", help='Save checkpoints to this directory', required=True, type=str)
     parser.add_argument("--checkpoint_path", help='Resume from this checkpoint', default=None, type=str)
-    parser.add_argument('--config_file', help='The train config file', default='../configs/train_config_288.yaml',
+    parser.add_argument('--config_file', help='The train config file', default='../configs/train_config.yaml',
                         required=True, type=str)
     parser.add_argument('--train_type', help='Resume qulity disc from this checkpoint', default='train', type=str)
 

@@ -44,7 +44,7 @@ def main():
         results.append('video:{} offset:{} conf:{}'.format(v_file,offset,conf))
         with open(data_root + '/score.txt', 'a') as fw:
             fw.write("{},{},{}\n".format(v_file,offset,conf))
-        if offset<-2 or offset>2:
+        if offset<-1 or offset>1:
             bad_offset_f.append(v_file)
             with open(data_root + '/bad_off.txt', 'a', encoding='utf-8') as fw:
                 fw.write("{}\n".format(v_file))

@@ -1,8 +1,10 @@
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+import logging
 
 
 class FaceDetector():
+    logging.basicConfig(level=logging.ERROR)
     # 使用modelscope的mogofacedetector模型进行人脸检测
     model_id = 'damo/cv_resnet50_face-detection_retinaface'
 
