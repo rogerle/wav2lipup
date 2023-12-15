@@ -21,22 +21,24 @@ class FaceEncode(unittest.TestCase):
         fe = FaceCreator()
         # random_data = torch.randn([1,3,96,96])
         # output = fe.forward(random_data)
-        audios=torch.randn(32,5,1,80,16)
-        faces =torch.randn(32,6,5,288,288)
+        audios=torch.randn(5,5,1,80,16)
+        faces =torch.randn(5,6,5,288,288)
         summary(fe,input_data=(audios,faces))
 
         sData = FaceDataset('../data/test_data/pr_data', img_size=288)
-        """test_loader = DataLoader(sData)
+        test_loader = DataLoader(sData)
         for i,(x, indiv_mels, mel, gt) in enumerate(test_loader):
             gen_img = fe(indiv_mels,x)
+            print('y data shape {} , {}'.format(gt.shape, type(gt)))
             print('Face generator data shape {} , {}'.format(gen_img.shape,type(gen_img)))
-            plt.imshow(gen_img.detach()[0][0][0])
+            img = (gen_img.detach().cpu().numpy().transpose(0, 2, 3, 4, 1) * 255.).astype(np.uint8)
+            plt.imshow(img)
             plt.show()
 
             disc_tmp = Discriminator()
             pred_real = disc_tmp(gt)
             pred_fake = disc_tmp(gen_img)
-            print("disc real and fake image shape:{} {}".format(pred_real.shape,pred_fake.shape))"""
+            print("disc real and fake image shape:{} {}".format(pred_real.shape,pred_fake.shape))
         #img = output.detach().numpy()
         #plt.imshow(img,interpolation='none',cmap='Blues')
 

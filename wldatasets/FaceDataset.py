@@ -33,8 +33,9 @@ class FaceDataset(Dataset):
         :param index: the index of item
         :return: image
         """
-        img_dir = self.dirlist[idx]
         while 1:
+            index = random.randint(0, len(self.dirlist) - 1)
+            img_dir = self.dirlist[index]
             # 随机抽取一个帧作为起始帧进行处理
             image_names = self.__get_imgs(img_dir)
             if image_names is None or len(image_names) <= 3 * self.hp.syncnet_T:
@@ -150,13 +151,8 @@ class FaceDataset(Dataset):
         return wa
 
     def __crop_audio_window(self, spec, start_frame):
-        if type(start_frame) == int:
-            start_frame_num = start_frame
-        else:
-            start_frame_num = int(Path(start_frame).stem)
-
+        start_frame_num = start_frame
         start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
-
         end_idx = start_idx + self.hp.syncnet_mel_step_size
 
         spec = spec[start_idx:end_idx, :]
@@ -165,10 +161,11 @@ class FaceDataset(Dataset):
 
     def __get_segmented_mels(self, spec, image_name):
         mels = []
-        start_frame_num = int(Path(image_name).stem) + 1
+        syncnet_T = 5
+        start_frame_num = int(image_name) + 1
         if start_frame_num - 2 < 0:
             return None
-        for i in range(start_frame_num, start_frame_num + self.hp.syncnet_T):
+        for i in range(start_frame_num, start_frame_num + syncnet_T):
             m = self.__crop_audio_window(spec, i - 2)
             if m.shape[0] != self.hp.syncnet_mel_step_size:
                 return None

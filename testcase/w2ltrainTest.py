@@ -12,6 +12,9 @@ from trains import wl_train
 from wldatasets.SyncNetDataset import SyncNetDataset
 from wldatasets.FaceDataset import FaceDataset
 
+syncnet = SyncNetModel()
+for p in syncnet.parameters():
+    p.requires_grad = False
 class W2LtrainTest(unittest.TestCase):
     def test_train(self):
         param = ParamsUtil()
@@ -20,21 +23,21 @@ class W2LtrainTest(unittest.TestCase):
         Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
         disc_checkpoint_path = None
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        syncnet_checkpoint_path='../data/syncnet_checkpoint/sync_checkpoint_step000370000.pth'
+        syncnet_checkpoint_path='../data/syncnet_checkpoint/sync_checkpoint_step000340000.pth'
 
         train_dataset = FaceDataset(data_root, run_type='train', img_size=param.img_size)
         test_dataset = FaceDataset(data_root, run_type='eval', img_size=param.img_size)
 
-        train_data_loader = DataLoader(train_dataset, batch_size=param.batch_size, shuffle=True,
-                                       num_workers=param.num_works)
+        train_data_loader = DataLoader(train_dataset, batch_size=4, shuffle=True,
+                                       num_workers=8)
 
-        test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
-                                      num_workers=param.num_works)
+        test_data_loader = DataLoader(test_dataset, batch_size=4,
+                                      num_workers=8)
 
 
         model=FaceCreator()
         disc = Discriminator()
-        syncnet = SyncNetModel()
+
         optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad],
                                lr=float(param.init_learning_rate), betas=(0.5, 0.999))
 
@@ -47,7 +50,7 @@ class W2LtrainTest(unittest.TestCase):
         start_epoch = 0
 
         # 装在sync_net
-        syncnet, step, epoch = wl_train.load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
+        wl_train.load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
 
         wl_train.train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer,
                         checkpoint_dir, 0, 0)

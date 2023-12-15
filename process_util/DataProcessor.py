@@ -9,9 +9,12 @@ from moviepy.editor import *
 from tqdm import tqdm
 
 from process_util.FaceDetector import FaceDetector
+import logging
+
 
 
 class DataProcessor():
+    logging.basicConfig(level=logging.ERROR)
     face_detector = FaceDetector()
     '''
         视频文件处理，把视频文件分解成脸部图片。并分离出音频
@@ -75,8 +78,7 @@ class DataProcessor():
                 box = boxes[idx]
                 x1, y1, x2, y2 = box
                 file_name = split_dir + '/{}.jpg'.format(j)
-                face = frame[int(y1):int(y2), int(x1):int(x2)]
-                # faces['{}'.format(j)] = face
+                face = frame[max(0,int(y1)):min(int(y2),frame.shape[0]), max(0,int(x1)):min(int(x2),frame.shape[1])]
                 if np.size(face) == 0:
                     continue
                 cv2.imwrite(file_name, face)

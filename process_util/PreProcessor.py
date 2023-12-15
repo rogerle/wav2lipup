@@ -6,6 +6,8 @@ from modelscope.utils.constant import Tasks
 from moviepy.editor import *
 
 from tqdm import tqdm
+import logging
+
 
 '''
     预处理各类文件和数据，用于训练，包括初始视频的处理切割，还有训练前数据集的预处理等。
@@ -15,6 +17,7 @@ from tqdm import tqdm
 
 
 class PreProcessor():
+    logging.basicConfig(level=logging.ERROR)
     model_id = 'damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
 
     '''

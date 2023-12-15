@@ -3,19 +3,23 @@ from collections import Counter
 from pathlib import Path
 
 import cv2
+from tqdm import tqdm
+
 from process_util.DataProcessor import DataProcessor
 
 class DataProcessTest(unittest.TestCase):
-
+    __input_dir__='../data/test_data/outputT'
     dataProcessor = DataProcessor()
     def testOpenCV(self):
         dp = self.dataProcessor
-        dp.processVideoFile('../data/test_data/output/test/00021_00022.mp4',
-                            device='gpu',
-                            processed_data_root='../data/test_data/pr_data')
-        #face_path = Path('../data/test_data/pr_data/000001/000001_00056_00058')
-        #wavfile = Path('../data/test_data/pr_data/000001/000001_00056_00058/audio.wav')
-        #self.assertTrue(wavfile.exists())
+        files = []
+        for file in Path.glob(Path(self.__input_dir__), '**/*.mp4'):
+            if file.is_file():
+                files.append(file.as_posix())
+        files.sort()
+        for video in tqdm(files):
+            dp.processVideoFile(video,
+                                processed_data_root='../data/test_data/pr_data')
 
 
 

@@ -17,7 +17,8 @@ from tqdm import tqdm
 from process_util.DataProcessor import DataProcessor
 from process_util.PreProcessor import PreProcessor
 from sklearn.model_selection import train_test_split
-
+import logging
+logging.basicConfig(level=logging.ERROR)
 
 def orignal_process(inputdir):
     dirs = []
