@@ -21,11 +21,11 @@ from wldatasets.FaceDataset import FaceDataset
 param = ParamsUtil()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-syncnet_wt = float(param.syncnet_wt)
 
 syncnet = SyncNetModel().to(device)
 for p in syncnet.parameters():
     p.requires_grad = False
+
 
 logloss = nn.BCELoss()
 recon_loss = nn.L1Loss()
@@ -34,7 +34,7 @@ recon_loss = nn.L1Loss()
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     print("Load checkpoint from: {}".format(checkpoint_path))
 
-    if device == 'cuda':
+    if torch.cuda.is_available():
         checkpoint = torch.load(checkpoint_path)
     else:
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
@@ -105,6 +105,7 @@ def eval_model(test_data_loader, model, disc):
         for step, (x, indiv_mels, mel, gt) in enumerate(test_data_loader):
             model.eval()
             disc.eval()
+            syncnet.eval()
 
             x = x.to(device)
             mel = mel.to(device)
@@ -182,7 +183,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
 
                 g = model(indiv_mels, x)
 
-                if syncnet_wt > 0.:
+                if float(param.syncnet_wt) > 0.:
                     sync_loss = get_sync_loss(mel, g)
                 else:
                     sync_loss = 0.
@@ -194,8 +195,8 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
 
                 l1loss = recon_loss(g, gt)
 
-                loss = syncnet_wt * sync_loss + float(param.disc_wt) * perceptual_loss + \
-                       (1. - syncnet_wt - float(param.disc_wt)) * l1loss
+                loss = float(param.syncnet_wt) * sync_loss + float(param.disc_wt) * perceptual_loss + \
+                       (1. - float(param.syncnet_wt) - float(param.disc_wt)) * l1loss
 
                 loss.backward()
                 optimizer.step()
@@ -225,7 +226,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 global_step += 1
 
                 running_l1_loss += l1loss.item()
-                if syncnet_wt > 0.:
+                if float(param.syncnet_wt) > 0.:
                     running_sync_loss += sync_loss.item()
                 else:
                     running_sync_loss += 0.

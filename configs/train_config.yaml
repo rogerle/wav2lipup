@@ -10,9 +10,9 @@ train_config:
   # For 16000Hz, 200 = 12.5 ms (0.0125 * sample_rate)
   # For 16000Hz, 800 = 50 ms (If None, win_size = n_fft) (0.05 * sample_rate)
   # 16000Hz (corresponding to librispeech) (sox --i <filename>)
-  n_fft: 800
+  n_fft: 850
   hop_size: 200
-  win_size: 800
+  win_size: 850
   sample_rate: 16000
   # Can replace hop_size parameter. (Recommended: 12.5)
   frame_shift_ms: None
@@ -46,7 +46,7 @@ train_config:
   fps: 25
 
   batch_size: 2
-  init_learning_rate: 1e-4
+  init_learning_rate: 1e-5
   epochs: 1000000000
   num_works: 6
   checkpoint_interval: 300
@@ -57,13 +57,13 @@ train_config:
   #####################################sycnet parameters##########################################
 
   syncnet_batch_size: 128
-  syncnet_learning_rate: 1e-6
+  syncnet_learning_rate: 1e-5
   syncnet_checkpoint_interval: 1000
   syncnet_eval_interval: 1000
   syncnet_iepoch: 500
   syncnet_mepoch: 1000
   #####################################Disc parameters##########################################
   disc_wt: 0.07
-  disc_initial_learning_rate: 1e-4
+  disc_initial_learning_rate: 1e-5
 
 

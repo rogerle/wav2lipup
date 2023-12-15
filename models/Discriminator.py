@@ -12,25 +12,25 @@ class Discriminator(nn.Module):
             nn.Sequential(BaseNormConv(3, 32, kernel_size=(7, 7), stride=1, padding=3)),  # 144,288
 
             nn.Sequential(BaseNormConv(32, 64, kernel_size=5, stride=(1, 2), padding=2),  # 144,144
-                          BaseNormConv(64, 64, kernel_size=3, stride=1, padding=1)),
+                          BaseNormConv(64, 64, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(64, 64, kernel_size=3, stride=2, padding=1),  # 72,72
-                          BaseNormConv(64, 64, kernel_size=3, stride=1, padding=1)),
+            nn.Sequential(BaseNormConv(64, 64, kernel_size=5, stride=2, padding=2),  # 72,72
+                          BaseNormConv(64, 64, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(64, 128, kernel_size=3, stride=2, padding=1),  # 36,36
-                          BaseNormConv(128, 128, kernel_size=3, stride=1, padding=1)),
+            nn.Sequential(BaseNormConv(64, 128, kernel_size=5, stride=2, padding=2),  # 36,36
+                          BaseNormConv(128, 128, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(128, 256, kernel_size=3, stride=2, padding=1),  # 18,18
-                          BaseNormConv(256, 256, kernel_size=3, stride=1, padding=1)),
+            nn.Sequential(BaseNormConv(128, 256, kernel_size=5, stride=2, padding=2),  # 18,18
+                          BaseNormConv(256, 256, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(256, 256, kernel_size=3, stride=2, padding=1),  # 9,9
-                          BaseNormConv(256, 256, kernel_size=3, stride=1, padding=1)),
+            nn.Sequential(BaseNormConv(256, 256, kernel_size=5, stride=2, padding=2),  # 9,9
+                          BaseNormConv(256, 256, kernel_size=5, stride=1, padding=2)),
 
             nn.Sequential(BaseNormConv(256, 512, kernel_size=3, stride=2, padding=1),  # 5,5
                           BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1)),
 
-            nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=1, padding=0),
-                          BaseNormConv(512, 512, kernel_size=3, stride=1, padding=1)),
+            nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=2, padding=1),   # 3,3
+                          BaseNormConv(512, 512, kernel_size=3,stride=1, padding=1)),
 
             nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=1, padding=0),  # 1, 1
                           BaseNormConv(512, 512, kernel_size=1, stride=1, padding=0))])
@@ -55,7 +55,7 @@ class Discriminator(nn.Module):
         for f in self.face_encoder_blocks:
             false_feats = f(false_feats)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if device == 'cuda':
+        if torch.cuda.is_available():
             false_pred_loss = F.binary_cross_entropy(self.binary_pred(false_feats).view(len(false_feats), -1),
                                                      torch.ones((len(false_feats), 1)).to(device))
         else:
