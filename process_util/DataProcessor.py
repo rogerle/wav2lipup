@@ -72,7 +72,7 @@ class DataProcessor():
             boxes = face_result['boxes']
             if scores is None or len(scores) == 0:
                 print('bad face video,drop it!')
-                continue
+                break
             else:
                 idx = scores.index(max(scores))
                 box = boxes[idx]

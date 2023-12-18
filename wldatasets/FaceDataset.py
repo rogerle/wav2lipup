@@ -33,9 +33,8 @@ class FaceDataset(Dataset):
         :param index: the index of item
         :return: image
         """
+        img_dir = self.dirlist[idx]
         while 1:
-            index = random.randint(0, len(self.dirlist) - 1)
-            img_dir = self.dirlist[index]
             # 随机抽取一个帧作为起始帧进行处理
             image_names = self.__get_imgs(img_dir)
             if image_names is None or len(image_names) <= 3 * self.hp.syncnet_T:
@@ -46,6 +45,8 @@ class FaceDataset(Dataset):
             window_fnames = self.__get_window(img_name,img_dir)
             wrong_window_fnames = self.__get_window(wrong_img_name,img_dir)
             if window_fnames is None or wrong_window_fnames is None:
+                continue
+            if len(window_fnames) < self.hp.syncnet_T or len(wrong_window_fnames) < self.hp.syncnet_T:
                 continue
 
             window = self.__read_window(window_fnames)
@@ -81,7 +82,7 @@ class FaceDataset(Dataset):
             y = torch.tensor(y, dtype=torch.float)
             mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
             indiv_mels = torch.tensor(indiv_mels, dtype=torch.float).unsqueeze(1)
-
+            #print('img_dir: {}|window start: {}|wrong window:{}|indiv_mels size: {}|mel size:{}'.format(img_dir,window_fnames[0],wrong_window_fnames[0],len(indiv_mels),mel.size()))
             return x, indiv_mels, mel, y
 
     def __len__(self):

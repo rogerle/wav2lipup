@@ -17,17 +17,20 @@ from process_util.ParamsUtil import ParamsUtil
 from wldatasets.FaceDataset import FaceDataset
 
 # 判断是否使用gpu
+import os
+
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 param = ParamsUtil()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+# device = torch.device("cpu")
 
 syncnet = SyncNetModel().to(device)
 for p in syncnet.parameters():
     p.requires_grad = False
 
-
-logloss = nn.BCELoss()
+logloss = nn.BCEWithLogitsLoss()
+# logloss = nn.BCELoss()
 recon_loss = nn.L1Loss()
 
 
@@ -66,7 +69,7 @@ def get_sync_loss(mel, g):
     g = torch.cat([g[:, :, i] for i in range(param.syncnet_T)], dim=1)
     # B, 3 * T, H//2, W
     a, v = syncnet(mel, g)
-    y = torch.ones(g.size(0), 1).float().to(device)
+    y = torch.ones(g.size(0), 1, dtype=torch.float).to(device)
     return cosine_loss(a, v, y)
 
 
@@ -105,7 +108,6 @@ def eval_model(test_data_loader, model, disc):
         for step, (x, indiv_mels, mel, gt) in enumerate(test_data_loader):
             model.eval()
             disc.eval()
-            syncnet.eval()
 
             x = x.to(device)
             mel = mel.to(device)
@@ -113,11 +115,11 @@ def eval_model(test_data_loader, model, disc):
             gt = gt.to(device)
 
             pred = disc(gt)
-            disc_real_loss = F.binary_cross_entropy(pred, torch.ones((len(pred), 1)).to(device))
+            disc_real_loss = logloss(pred, torch.ones((len(pred), 1)).to(device))
 
             g = model(indiv_mels, x)
             pred = disc(g)
-            disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros((len(pred), 1)).to(device))
+            disc_fake_loss = logloss(pred, torch.zeros((len(pred), 1)).to(device))
 
             running_disc_real_loss.append(disc_real_loss.item())
             running_disc_fake_loss.append(disc_fake_loss.item())
@@ -125,7 +127,8 @@ def eval_model(test_data_loader, model, disc):
             sync_loss = get_sync_loss(mel=mel, g=g)
 
             if param.disc_wt > 0.:
-                perceptual_loss = disc.perceptual_forward(g)
+                perceptual = disc(g)
+                perceptual_loss = logloss(perceptual, torch.ones(len(perceptual), 1, dtype=torch.float).to(device))
             else:
                 perceptual_loss = 0.
 
@@ -180,19 +183,21 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
 
                 ### Train generator now. Remove ALL grads.
                 optimizer.zero_grad()
+                disc_optimizer.zero_grad()
 
                 g = model(indiv_mels, x)
 
                 if float(param.syncnet_wt) > 0.:
                     sync_loss = get_sync_loss(mel, g)
                 else:
-                    sync_loss = 0.
+                    sync_loss = torch.tensor(0, dtype=torch.float)
 
                 if float(param.disc_wt) > 0.:
-                    perceptual_loss = disc.perceptual_forward(g)
+                    perceptual = disc(g)
+                    perceptual_loss = logloss(perceptual, torch.ones(len(perceptual), 1, dtype=torch.float).to(device))
                 else:
-                    perceptual_loss = 0.
-
+                    perceptual_loss = torch.tensor(0, dtype=torch.float)
+                # print ("g:{}|gt:{}".format(g.shape,gt.shape))
                 l1loss = recon_loss(g, gt)
 
                 loss = float(param.syncnet_wt) * sync_loss + float(param.disc_wt) * perceptual_loss + \
@@ -201,15 +206,15 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 loss.backward()
                 optimizer.step()
 
-                ## Remove all gradients before Training disc
+                # Remove all gradients before Training disc
                 disc_optimizer.zero_grad()
 
                 pred = disc(gt)
-                disc_real_loss = F.binary_cross_entropy(pred, torch.ones((len(pred), 1)).to(device))
+                disc_real_loss = logloss(pred, torch.ones((len(pred), 1)).to(device))
                 disc_real_loss.backward()
 
                 pred = disc(g.detach())
-                disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros((len(pred), 1)).to(device))
+                disc_fake_loss = logloss(pred, torch.zeros((len(pred), 1)).to(device))
                 disc_fake_loss.backward()
 
                 disc_optimizer.step()
@@ -251,7 +256,8 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 prog_bar.set_postfix(Step=global_step, L1=running_l1_loss / (step + 1),
                                      Sync=running_sync_loss / (step + 1),
                                      Percep=running_perceptual_loss / (step + 1),
-                                     Fake=running_disc_fake_loss / (step + 1), Real=running_disc_real_loss / (step + 1))
+                                     Fake=running_disc_fake_loss / (step + 1),
+                                     Real=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/L1_loss', step=global_step, value=running_l1_loss / (step + 1))
                 writer.add_scalar(tag='train/Sync_loss', step=global_step, value=running_sync_loss / (step + 1))
                 writer.add_scalar(tag='train/Percep_loss', step=global_step, value=running_perceptual_loss / (step + 1))
@@ -277,10 +283,10 @@ def main():
     test_dataset = FaceDataset(args.data_root, run_type='eval', img_size=param.img_size)
 
     train_data_loader = DataLoader(train_dataset, batch_size=param.batch_size, shuffle=True,
-                                   num_workers=param.num_works)
+                                   num_workers=param.num_works, drop_last=True)
 
     test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
-                                  num_workers=8)
+                                  num_workers=param.num_works, drop_last=True)
 
     model = FaceCreator().to(device)
     disc = Discriminator().to(device)
@@ -291,8 +297,8 @@ def main():
     optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad],
                            lr=float(param.init_learning_rate), betas=(0.5, 0.999))
 
-    disc_optimizer = optim.Adam([p for p in disc.parameters() if p.requires_grad],
-                                lr=float(param.disc_initial_learning_rate), betas=(0.5, 0.999))
+    disc_optimizer = optim.Adam([p for p in model.parameters() if p.requires_grad],
+                                lr=float(param.init_learning_rate), betas=(0.5, 0.999))
     start_step = 0
     start_epoch = 0
 

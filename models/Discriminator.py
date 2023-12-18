@@ -1,6 +1,8 @@
 from torch import nn
 import torch
 from torch.nn import functional as F
+
+from models.BaseConv2D import BaseConv2D
 from models.BaseNormConv import BaseNormConv
 
 
@@ -9,15 +11,15 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.face_encoder_blocks = nn.ModuleList([
-            nn.Sequential(BaseNormConv(3, 32, kernel_size=(7, 7), stride=1, padding=3)),  # 144,288
+            nn.Sequential(BaseNormConv(3, 32, kernel_size=7, stride=1, padding=3)),  # 144,288
 
             nn.Sequential(BaseNormConv(32, 64, kernel_size=5, stride=(1, 2), padding=2),  # 144,144
                           BaseNormConv(64, 64, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(64, 64, kernel_size=5, stride=2, padding=2),  # 72,72
-                          BaseNormConv(64, 64, kernel_size=5, stride=1, padding=2)),
+            nn.Sequential(BaseNormConv(64, 128, kernel_size=5, stride=2, padding=2),  # 72,72
+                          BaseNormConv(128, 128, kernel_size=5, stride=1, padding=2)),
 
-            nn.Sequential(BaseNormConv(64, 128, kernel_size=5, stride=2, padding=2),  # 36,36
+            nn.Sequential(BaseNormConv(128, 128, kernel_size=5, stride=2, padding=2),  # 36,36
                           BaseNormConv(128, 128, kernel_size=5, stride=1, padding=2)),
 
             nn.Sequential(BaseNormConv(128, 256, kernel_size=5, stride=2, padding=2),  # 18,18
@@ -36,7 +38,7 @@ class Discriminator(nn.Module):
                           BaseNormConv(512, 512, kernel_size=1, stride=1, padding=0))])
 
         self.binary_pred = nn.Sequential(nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0),
-                                         nn.Sigmoid())
+                                         nn.BatchNorm2d(1))
         self.label_noise = .0
 
     def get_lower_half(self, face_sequences):
@@ -44,10 +46,13 @@ class Discriminator(nn.Module):
 
     def to_2d(self, face_sequences):
         B = face_sequences.size(0)
-        face_sequences = torch.cat([face_sequences[:, :, i] for i in range(face_sequences.size(2))], dim=0)
+        input_dim_size = len(face_sequences.size())
+        if input_dim_size > 4:
+            face_sequences = torch.cat([face_sequences[:, :, i] for i in range(face_sequences.size(2))], dim=0)
         return face_sequences
 
     def perceptual_forward(self, false_face_sequences):
+        logloss = nn.BCELoss()
         false_face_sequences = self.to_2d(false_face_sequences)
         false_face_sequences = self.get_lower_half(false_face_sequences)
 
@@ -55,12 +60,10 @@ class Discriminator(nn.Module):
         for f in self.face_encoder_blocks:
             false_feats = f(false_feats)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if torch.cuda.is_available():
-            false_pred_loss = F.binary_cross_entropy(self.binary_pred(false_feats).view(len(false_feats), -1),
-                                                     torch.ones((len(false_feats), 1)).to(device))
-        else:
-            false_pred_loss = F.binary_cross_entropy(self.binary_pred(false_feats).view(len(false_feats), -1),
-                                                     torch.ones((len(false_feats), 1)))
+        y = torch.ones(len(false_feats), 1,dtype=torch.float).to(device)
+        x = self.binary_pred(false_feats)
+        x = x.view(len(x), -1)
+        false_pred_loss = logloss(x,y)
 
         return false_pred_loss
 

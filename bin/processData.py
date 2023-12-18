@@ -97,7 +97,7 @@ def process_data(inputdir, outputdir):
     files = get_processed_files(inputdir, outputdir)
     proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
 
-    num_p = int(multiprocessing.cpu_count()/2)
+    num_p = int(multiprocessing.cpu_count()-2)
     ctx = multiprocessing.get_context('spawn')
     pool = ctx.Pool(num_p)
     prog_bar = tqdm(pool.imap(proc_f,files), total=len(files))
@@ -128,7 +128,7 @@ def train_file_write(inputdir):
     if len(result_list) < 14:
         test_result = eval_result = train_result = result_list
     else:
-        train_result, test_result = train_test_split(result_list, test_size=0.15, random_state=42)
+        train_result, test_result = train_test_split(result_list, test_size=0.15, random_state=42,shuffle=True)
         test_result, eval_result = train_test_split(test_result, test_size=0.5, random_state=42)
 
     for file_name, data_set in zip(("train.txt", "test.txt", "eval.txt"), (train_result, test_result, eval_result)):
@@ -150,7 +150,7 @@ def clear_data(inputdir):
             for img in line.glob('**/*.jpg'):
                 if img.is_file():
                     imgs.append(int(img.stem))
-            if imgs is None or len(imgs) <=25 or len(imgs) < max(imgs):
+            if imgs is None or len(imgs) <125 or len(imgs) < max(imgs):
                 print('delete empty or bad video!{}'.format(line))
                 dirs = line.parts
                 bad_line = str(dirs[-2] + '/' + dirs[-1])
