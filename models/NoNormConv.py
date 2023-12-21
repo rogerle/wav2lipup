@@ -1,7 +1,7 @@
 from torch import nn
 
 
-class BaseNormConv(nn.Module):
+class NoNormConv(nn.Module):
     def __init__(self, cin, cout, kernel_size, stride, padding, residual=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.conv_block = nn.Sequential(
