@@ -37,8 +37,9 @@ class Discriminator(nn.Module):
             nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=1, padding=0),  # 1, 1
                           BaseNormConv(512, 512, kernel_size=1, stride=1, padding=0))])
 
+        #self.binary_pred = nn.Sequential(BaseConv2D(512, 1, kernel_size=1, stride=1, padding=0,act='sigmoid'))
         self.binary_pred = nn.Sequential(nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0),
-                                         nn.BatchNorm2d(1))
+                                         nn.Sigmoid())
         self.label_noise = .0
 
     def get_lower_half(self, face_sequences):
@@ -52,7 +53,6 @@ class Discriminator(nn.Module):
         return face_sequences
 
     def perceptual_forward(self, false_face_sequences):
-        logloss = nn.BCELoss()
         false_face_sequences = self.to_2d(false_face_sequences)
         false_face_sequences = self.get_lower_half(false_face_sequences)
 
@@ -61,9 +61,7 @@ class Discriminator(nn.Module):
             false_feats = f(false_feats)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         y = torch.ones(len(false_feats), 1,dtype=torch.float).to(device)
-        x = self.binary_pred(false_feats)
-        x = x.view(len(x), -1)
-        false_pred_loss = logloss(x,y)
+        false_pred_loss = F.binary_cross_entropy(self.binary_pred(false_feats).view(len(false_feats),-1),y)
 
         return false_pred_loss
 
