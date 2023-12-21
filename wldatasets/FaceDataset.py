@@ -34,6 +34,7 @@ class FaceDataset(Dataset):
         :return: image
         """
         img_dir = self.dirlist[idx]
+        #print('img dir:{}'.format(img_dir))
         while 1:
             # 随机抽取一个帧作为起始帧进行处理
             image_names = self.__get_imgs(img_dir)

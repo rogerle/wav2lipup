@@ -115,11 +115,11 @@ def eval_model(test_data_loader, model, disc):
             gt = gt.to(device)
 
             pred = disc(gt)
-            disc_real_loss = logloss(pred, torch.ones((len(pred), 1)).to(device))
+            disc_real_loss = F.binary_cross_entropy(pred, torch.ones((len(pred), 1)).to(device))
 
             g = model(indiv_mels, x)
             pred = disc(g)
-            disc_fake_loss = logloss(pred, torch.zeros((len(pred), 1)).to(device))
+            disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros((len(pred), 1)).to(device))
 
             running_disc_real_loss.append(disc_real_loss.item())
             running_disc_fake_loss.append(disc_fake_loss.item())
@@ -127,14 +127,14 @@ def eval_model(test_data_loader, model, disc):
             sync_loss = get_sync_loss(mel=mel, g=g)
 
             if param.disc_wt > 0.:
-                perceptual = disc(g)
-                perceptual_loss = logloss(perceptual, torch.ones(len(perceptual), 1, dtype=torch.float).to(device))
+                perceptual_loss = disc.perceptual_forward(g)
             else:
                 perceptual_loss = 0.
 
             l1loss = recon_loss(g, gt)
-
-            running_l1_loss.append(l1loss.item())
+            loss = float(param.syncnet_wt) * sync_loss + float(param.disc_wt) * perceptual_loss + \
+                   (1. - float(param.syncnet_wt) - float(param.disc_wt)) * l1loss
+            running_l1_loss.append(loss.item())
             running_sync_loss.append(sync_loss.item())
 
             if param.disc_wt > 0.:
@@ -193,8 +193,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                     sync_loss = torch.tensor(0, dtype=torch.float)
 
                 if float(param.disc_wt) > 0.:
-                    perceptual = disc(g)
-                    perceptual_loss = logloss(perceptual, torch.ones(len(perceptual), 1, dtype=torch.float).to(device))
+                    perceptual_loss = disc.perceptual_forward(g)
                 else:
                     perceptual_loss = torch.tensor(0, dtype=torch.float)
                 # print ("g:{}|gt:{}".format(g.shape,gt.shape))
@@ -210,11 +209,11 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 disc_optimizer.zero_grad()
 
                 pred = disc(gt)
-                disc_real_loss = logloss(pred, torch.ones((len(pred), 1)).to(device))
+                disc_real_loss = F.binary_cross_entropy(pred, torch.ones((len(pred), 1)).to(device))
                 disc_real_loss.backward()
 
                 pred = disc(g.detach())
-                disc_fake_loss = logloss(pred, torch.zeros((len(pred), 1)).to(device))
+                disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros((len(pred), 1)).to(device))
                 disc_fake_loss.backward()
 
                 disc_optimizer.step()
