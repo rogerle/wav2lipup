@@ -3,7 +3,7 @@ import torch
 from torch.nn import functional as F
 
 from models.BaseConv2D import BaseConv2D
-from models.BaseNormConv import BaseNormConv
+from models.NoNormConv import NoNormConv
 
 
 class Discriminator(nn.Module):
@@ -11,30 +11,30 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.face_encoder_blocks = nn.ModuleList([
-            nn.Sequential(BaseNormConv(3, 32, kernel_size=7, stride=1, padding=3)),  # 144,288
+            nn.Sequential(NoNormConv(3, 32, kernel_size=7, stride=1, padding=3)),  # 144,288
 
-            nn.Sequential(BaseNormConv(32, 64, kernel_size=5, stride=(1, 2), padding=2),  # 144,144
+            nn.Sequential(NoNormConv(32, 64, kernel_size=5, stride=(1, 2), padding=2),  # 144,144
                           nn.MaxPool2d(kernel_size=5,stride=1,padding=2)),
 
-            nn.Sequential(BaseNormConv(64, 128, kernel_size=5, stride=2, padding=2),  # 72,72
+            nn.Sequential(NoNormConv(64, 128, kernel_size=5, stride=2, padding=2),  # 72,72
                           nn.MaxPool2d(kernel_size=5,stride=1,padding=2)),
 
-            nn.Sequential(BaseNormConv(128, 128, kernel_size=5, stride=2, padding=2),  # 36,36
+            nn.Sequential(NoNormConv(128, 128, kernel_size=5, stride=2, padding=2),  # 36,36
                           nn.MaxPool2d(kernel_size=5,stride=1,padding=2)),
 
-            nn.Sequential(BaseNormConv(128, 256, kernel_size=5, stride=2, padding=2),  # 18,18
+            nn.Sequential(NoNormConv(128, 256, kernel_size=5, stride=2, padding=2),  # 18,18
                           nn.MaxPool2d(kernel_size=5,stride=1,padding=2)),
 
-            nn.Sequential(BaseNormConv(256, 256, kernel_size=5, stride=2, padding=2),  # 9,9
+            nn.Sequential(NoNormConv(256, 256, kernel_size=5, stride=2, padding=2),  # 9,9
                           nn.MaxPool2d(kernel_size=5,stride=1,padding=2)),
 
-            nn.Sequential(BaseNormConv(256, 512, kernel_size=3, stride=2, padding=1),  # 5,5
+            nn.Sequential(NoNormConv(256, 512, kernel_size=3, stride=2, padding=1),  # 5,5
                           nn.MaxPool2d(kernel_size=3,stride=1,padding=1)),
 
-            nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=2, padding=1),   # 3,3
+            nn.Sequential(NoNormConv(512, 512, kernel_size=3, stride=2, padding=1),   # 3,3
                           nn.MaxPool2d(kernel_size=3,stride=1,padding=1)),
 
-            nn.Sequential(BaseNormConv(512, 512, kernel_size=3, stride=1, padding=0),  # 1, 1
+            nn.Sequential(NoNormConv(512, 512, kernel_size=3, stride=1, padding=0),  # 1, 1
                           nn.MaxPool2d(kernel_size=1,stride=1,padding=0))])
 
         #self.binary_pred = nn.Sequential(BaseConv2D(512, 1, kernel_size=1, stride=1, padding=0,act='sigmoid'))
