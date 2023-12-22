@@ -7,7 +7,6 @@ class ParamsUtil():
         with open(cf,'r')as f:
             datas = yaml.load(f,Loader=yaml.FullLoader)
         self.data = datas['train_config']
-        self.lists = list(datas['train_config'].items())
 
     def __getattr__(self, key):
         if key not in self.data:

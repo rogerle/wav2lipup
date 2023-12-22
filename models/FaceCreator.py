@@ -17,31 +17,25 @@ class FaceCreator(nn.Module):
             nn.Sequential(BaseConv2D(16, 32, kernel_size=5, stride=2, padding=2,act='relu'), # 144 144
                           BaseConv2D(32, 32, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),
 
-            nn.Sequential(BaseConv2D(32, 32, kernel_size=3, stride=2, padding=1,act='relu'),  # 72 72
-                          BaseConv2D(32, 32, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
-                          BaseConv2D(32, 32, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),
-
-            nn.Sequential(BaseConv2D(32, 64, kernel_size=3, stride=2, padding=1,act='relu'),  # 转成 35 36
-                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
+            nn.Sequential(BaseConv2D(32, 64, kernel_size=3, stride=2, padding=1,act='relu'),  # 72 72
                           BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),
 
-            nn.Sequential(BaseConv2D(64, 128, kernel_size=3, stride=2, padding=1,act='relu'),  # 转成 18 18
+            nn.Sequential(BaseConv2D(64, 128, kernel_size=3, stride=2, padding=1,act='relu'),  # 转成 35 36
+                          BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),
 
-            nn.Sequential(BaseConv2D(128, 256, kernel_size=3, stride=2, padding=1,act='relu'),  # 9 9
+            nn.Sequential(BaseConv2D(128, 256, kernel_size=3, stride=2, padding=1,act='relu'),  # 转成 18 18
                           BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),
 
-            nn.Sequential(BaseConv2D(256, 512, kernel_size=3, stride=2, padding=1,act='relu'),  # 5 5
+            nn.Sequential(BaseConv2D(256, 512, kernel_size=3, stride=2, padding=1,act='relu'),  # 9 9
                           BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),
 
-            nn.Sequential(BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0,act='relu'),
-                          BaseConv2D(512, 512, kernel_size=1, stride=1, padding=0,act='relu')),# 3
-            # 1 1
-            nn.Sequential(BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0,act='relu'),  # 1  1
-                          BaseConv2D(512, 512, kernel_size=1, stride=1, padding=0,act='relu'))
+            nn.Sequential(BaseConv2D(512, 512, kernel_size=3, stride=2, padding=0,act='relu'),),  # 4 4
+            nn.Sequential(BaseConv2D(512, 512, kernel_size=3, stride=1, padding=0,act='relu')),  # 2 2
+            nn.Sequential(BaseConv2D(512, 512, kernel_size=2, stride=1, padding=0,act='relu'),) # 1 1
         ])
 
         self.audio_encoder = nn.Sequential(
@@ -70,30 +64,23 @@ class FaceCreator(nn.Module):
             nn.Sequential(BaseConv2D(512, 512, kernel_size=1, stride=1, padding=0,act='relu')),# 1 1
 
 
-            nn.Sequential(BaseTranspose(1024, 512, kernel_size=3, stride=1, padding=0),
-                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),# 3 3
-
-            nn.Sequential(BaseTranspose(1024, 512, kernel_size=3, stride=2, padding=1),
-                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
-                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True,act='relu')), # 5 5
-
-            nn.Sequential(BaseTranspose(1024, 512, kernel_size=3, stride=2, padding=1),
-                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
-                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True,act='relu')), # 9 9
+            nn.Sequential(BaseTranspose(1024, 512, kernel_size=2, stride=1, padding=0),),# 2 2
+            nn.Sequential(BaseTranspose(1024, 512, kernel_size=3, stride=1, padding=0),), # 4 4
+            nn.Sequential(BaseTranspose(1024, 256, kernel_size=3, stride=2, padding=0),), # 9 9
 
             nn.Sequential(BaseTranspose(768, 384, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(384, 384, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(384, 384, kernel_size=3, stride=1, padding=1, residual=True,act='relu')), # 18 18
 
-            nn.Sequential(BaseTranspose(512, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.Sequential(BaseTranspose(640, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True,act='relu')), #36 36
 
-            nn.Sequential(BaseTranspose(320, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.Sequential(BaseTranspose(384, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True,act='relu')), #72 72
 
-            nn.Sequential(BaseTranspose(160, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.Sequential(BaseTranspose(192, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True,act='relu'),
                           BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True,act='relu')),  # 144 144

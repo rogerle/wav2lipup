@@ -11,9 +11,10 @@ from torch.utils.data import Dataset
 
 from process_util.ParamsUtil import ParamsUtil
 
+hp = ParamsUtil()
+
 
 class FaceDataset(Dataset):
-    hp = ParamsUtil()
 
     def __init__(self, data_dir,
                  run_type: str = 'train',
@@ -30,24 +31,24 @@ class FaceDataset(Dataset):
     def __getitem__(self, idx):
         """
         循环去一段视频和一段错误视频进行网络对抗，这里就是取两个不同视频的方法
-        :param index: the index of item
+        :param idx: the index of item
         :return: image
         """
         img_dir = self.dirlist[idx]
-        #print('img dir:{}'.format(img_dir))
+        # print('img dir:{}'.format(img_dir))
         while 1:
             # 随机抽取一个帧作为起始帧进行处理
             image_names = self.__get_imgs(img_dir)
-            if image_names is None or len(image_names) <= 3 * self.hp.syncnet_T:
+            if image_names is None or len(image_names) <= 3 * hp.syncnet_T:
                 continue
 
             # 获取连续5张脸，正确和错误的
             img_name, wrong_img_name = self.__get_choosen(image_names)
-            window_fnames = self.__get_window(img_name,img_dir)
-            wrong_window_fnames = self.__get_window(wrong_img_name,img_dir)
+            window_fnames = self.__get_window(img_name, img_dir)
+            wrong_window_fnames = self.__get_window(wrong_img_name, img_dir)
             if window_fnames is None or wrong_window_fnames is None:
                 continue
-            if len(window_fnames) < self.hp.syncnet_T or len(wrong_window_fnames) < self.hp.syncnet_T:
+            if len(window_fnames) < hp.syncnet_T or len(wrong_window_fnames) < hp.syncnet_T:
                 continue
 
             window = self.__read_window(window_fnames)
@@ -62,8 +63,8 @@ class FaceDataset(Dataset):
             if orginal_mel is None:
                 continue
 
-            mel = self.__crop_audio_window(orginal_mel.copy(),int(img_name))
-            if mel is None or mel.shape[0] != self.hp.syncnet_mel_step_size:
+            mel = self.__crop_audio_window(orginal_mel.copy(), int(img_name))
+            if mel is None or mel.shape[0] != hp.syncnet_mel_step_size:
                 continue
 
             indiv_mels = self.__get_segmented_mels(orginal_mel.copy(), img_name)
@@ -83,7 +84,7 @@ class FaceDataset(Dataset):
             y = torch.tensor(y, dtype=torch.float)
             mel = torch.tensor(np.transpose(mel, (1, 0)), dtype=torch.float).unsqueeze(0)
             indiv_mels = torch.tensor(indiv_mels, dtype=torch.float).unsqueeze(1)
-            #print('img_dir: {}|window start: {}|wrong window:{}|indiv_mels size: {}|mel size:{}'.format(img_dir,window_fnames[0],wrong_window_fnames[0],len(indiv_mels),mel.size()))
+            # print('img_dir: {}|window start: {}|wrong window:{}|indiv_mels size: {}|mel size:{}'.format(img_dir,window_fnames[0],wrong_window_fnames[0],len(indiv_mels),mel.size()))
             return x, indiv_mels, mel, y
 
     def __len__(self):
@@ -121,7 +122,7 @@ class FaceDataset(Dataset):
 
     def __get_window(self, img_name, img_dir):
         start_id = int(img_name)
-        seek_id = start_id + int(self.hp.syncnet_T)
+        seek_id = start_id + int(hp.syncnet_T)
         vidPath = self.data_dir + '/' + img_dir
         window_frames = []
         for frame_id in range(start_id, seek_id):
@@ -134,10 +135,8 @@ class FaceDataset(Dataset):
     def __read_window(self, window_fnames):
         window = []
         for f_name in window_fnames:
-            img = cv2.imread(f_name)
-            if img is None:
-                return None
             try:
+                img = cv2.imread(f_name)
                 img = cv2.resize(img, (self.img_size, self.img_size))
             except Exception as e:
                 print('Resize the face image error: {}'.format(e))
@@ -153,9 +152,11 @@ class FaceDataset(Dataset):
         return wa
 
     def __crop_audio_window(self, spec, start_frame):
+        mel_step_size = hp.syncnet_mel_step_size
+        fps = hp.fps
         start_frame_num = start_frame
-        start_idx = int(80. * (start_frame_num / float(self.hp.fps)))
-        end_idx = start_idx + self.hp.syncnet_mel_step_size
+        start_idx = int(80. * (start_frame_num / float(fps)))
+        end_idx = start_idx + mel_step_size
 
         spec = spec[start_idx:end_idx, :]
 
@@ -164,14 +165,15 @@ class FaceDataset(Dataset):
     def __get_segmented_mels(self, spec, image_name):
         mels = []
         syncnet_T = 5
+        mel_step_size = hp.syncnet_mel_step_size
         start_frame_num = int(image_name) + 1
         if start_frame_num - 2 < 0:
             return None
         for i in range(start_frame_num, start_frame_num + syncnet_T):
             m = self.__crop_audio_window(spec, i - 2)
-            if m.shape[0] != self.hp.syncnet_mel_step_size:
+            if m.shape[0] != mel_step_size:
                 return None
-            mels.append(np.transpose(m, (1, 0)))
+            mels.append(m.T)
         mels = np.asarray(mels)
 
         return mels
@@ -181,19 +183,19 @@ class FaceDataset(Dataset):
         try:
             wavform, sf = torchaudio.load(wavfile)
 
-            wavform = F.preemphasis(wavform, self.hp.preemphasis)
-            specgram = torchaudio.transforms.MelSpectrogram(sample_rate=self.hp.sample_rate,
-                                                            n_fft=self.hp.n_fft,
+            wavform = F.preemphasis(wavform, hp.preemphasis)
+            specgram = torchaudio.transforms.MelSpectrogram(sample_rate=hp.sample_rate,
+                                                            n_fft=hp.n_fft,
                                                             power=1.,
-                                                            hop_length=self.hp.hop_size,
-                                                            win_length=self.hp.win_size,
-                                                            f_min=self.hp.fmin,
-                                                            f_max=self.hp.fmax,
-                                                            n_mels=self.hp.num_mels,
-                                                            normalized=self.hp.signal_normalization)
+                                                            hop_length=hp.hop_size,
+                                                            win_length=hp.win_size,
+                                                            f_min=hp.fmin,
+                                                            f_max=hp.fmax,
+                                                            n_mels=hp.num_mels,
+                                                            normalized=hp.signal_normalization)
             orig_mel = specgram(wavform)
-            orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=self.hp.min_level_db,
-                                         db_multiplier=self.hp.ref_level_db)
+            orig_mel = F.amplitude_to_DB(orig_mel, multiplier=10., amin=hp.min_level_db,
+                                         db_multiplier=hp.ref_level_db,top_db=100)
             orig_mel = torch.mean(orig_mel, dim=0)
             orig_mel = orig_mel.t().numpy()
         except Exception as e:
