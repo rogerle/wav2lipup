@@ -39,8 +39,7 @@ class Discriminator(nn.Module):
 
         #self.binary_pred = nn.Sequential(BaseConv2D(512, 1, kernel_size=1, stride=1, padding=0,act='sigmoid'))
         self.binary_pred = nn.Sequential(nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0),
-                                         nn.Sigmoid(),
-                                         nn.MaxPool2d(kernel_size=1,stride=1,padding=0))
+                                         nn.Sigmoid())
         self.label_noise = .0
 
     def get_lower_half(self, face_sequences):
@@ -65,7 +64,7 @@ class Discriminator(nn.Module):
         y = torch.ones(len(false_feats), 1,dtype=torch.float).to(device)
         x = self.binary_pred(false_feats).view(false_feats.size(0),-1)
         try:
-            false_pred_loss = F.binary_cross_entropy_with_logits(x,y)
+            false_pred_loss = F.binary_cross_entropy(x,y)
         except Exception as e:
             print('x value:{}'.format(x))
             raise e
