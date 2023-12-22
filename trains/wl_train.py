@@ -115,11 +115,11 @@ def eval_model(test_data_loader, model, disc):
             gt = gt.to(device)
 
             pred = disc(gt)
-            disc_real_loss = F.binary_cross_entropy_with_logits(pred, torch.ones((pred.size(0), 1)).to(device))
+            disc_real_loss = F.binary_cross_entropy(pred, torch.ones((pred.size(0), 1)).to(device))
 
             g = model(indiv_mels, x)
             pred = disc(g)
-            disc_fake_loss = F.binary_cross_entropy_with_logits(pred, torch.zeros((pred.size(0), 1)).to(device))
+            disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros((pred.size(0), 1)).to(device))
 
             running_disc_real_loss.append(disc_real_loss.item())
             running_disc_fake_loss.append(disc_fake_loss.item())
@@ -209,11 +209,11 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 disc_optimizer.zero_grad()
 
                 pred = disc(gt)
-                disc_real_loss = F.binary_cross_entropy_with_logits(pred, torch.ones(pred.size(0), 1).to(device))
+                disc_real_loss = F.binary_cross_entropy(pred, torch.ones(pred.size(0), 1).to(device))
                 disc_real_loss.backward()
 
                 pred = disc(g.detach())
-                disc_fake_loss = F.binary_cross_entropy_with_logits(pred, torch.zeros(pred.size(0), 1).to(device))
+                disc_fake_loss = F.binary_cross_entropy(pred, torch.zeros(pred.size(0), 1).to(device))
                 disc_fake_loss.backward()
 
                 disc_optimizer.step()
@@ -249,7 +249,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                         average_sync_loss = eval_model(test_data_loader, model, disc)
                         writer.add_scalar(tag='train/eval_loss', step=global_step, value=average_sync_loss)
                         if average_sync_loss < .69:
-                            param.set_param('syncnet_wt', 0.01)
+                            param.set_param('syncnet_wt', 0.03)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, num_epochs))
                 prog_bar.set_postfix(Step=global_step, L1=running_l1_loss / (step + 1),
