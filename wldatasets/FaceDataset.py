@@ -182,7 +182,8 @@ class FaceDataset(Dataset):
         wavfile = self.data_dir + '/' + img_dir + '/audio.wav'
         try:
             wavform, sf = torchaudio.load(wavfile)
-
+            resample = torchaudio.transforms.Resample(sf, 16000)
+            wavform = resample(wavform)
             wavform = F.preemphasis(wavform, hp.preemphasis)
             specgram = torchaudio.transforms.MelSpectrogram(sample_rate=hp.sample_rate,
                                                             n_fft=hp.n_fft,

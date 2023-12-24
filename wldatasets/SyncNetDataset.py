@@ -116,7 +116,8 @@ class SyncNetDataset(Dataset):
         wavfile = self.data_dir + '/' + img_dir + '/audio.wav'
         try:
             wavform, sf = torchaudio.load(wavfile)
-
+            resample = torchaudio.transforms.Resample(sf, 16000)
+            wavform = resample(wavform)
             wavform = F.preemphasis(wavform, self.hp.preemphasis)
             specgram = torchaudio.transforms.MelSpectrogram(sample_rate=self.hp.sample_rate,
                                                             n_fft=self.hp.n_fft,

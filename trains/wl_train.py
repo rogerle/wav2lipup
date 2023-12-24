@@ -224,8 +224,9 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 if global_step % checkpoint_interval == 0:
                     collage = save_sample_images(x, g, gt, global_step, checkpoint_dir)
                     for batch_idx, c in enumerate(collage):
-                        for t in range(len(c)):
-                            writer.add_image(tag='train/sample', img=c[t] / 255., step=global_step, dataformats='HWC')
+                        for t in range(0,c.shape[0]-1):
+                            x = cv2.cvtColor(c[t], cv2.COLOR_RGB2BGR)
+                            writer.add_image(tag='train/sample', img=x/ 255., step=global_step)
 
                 global_step += 1
 
@@ -248,8 +249,8 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                     with torch.no_grad():
                         average_sync_loss = eval_model(test_data_loader, model, disc)
                         writer.add_scalar(tag='train/eval_loss', step=global_step, value=average_sync_loss)
-                        if average_sync_loss < .69:
-                            param.set_param('syncnet_wt', 0.03)
+                        if average_sync_loss < .75:
+                            param.set_param('syncnet_wt', 0.01)
 
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, num_epochs))
                 prog_bar.set_postfix(Step=global_step, L1=running_l1_loss / (step + 1),

@@ -13,19 +13,24 @@ class FaceCreator(nn.Module):
         self.face_encoder_block = nn.ModuleList([
             nn.Sequential(BaseConv2D(6, 16, kernel_size=7, stride=1, padding=3, act='relu')),  # 输入形状 [5,6,288 288]
 
-            nn.Sequential(BaseConv2D(16, 32, kernel_size=5, stride=2, padding=2, act='relu'),  # 144 144
+            nn.Sequential(BaseConv2D(16, 32, kernel_size=5, stride=2, padding=2, act='relu'), # 144 144
+                          BaseConv2D(32, 32, kernel_size=5, stride=1, padding=2, residual=True, act='relu'),
                           nn.MaxPool2d(kernel_size=5, stride=1, padding=2)),
 
             nn.Sequential(BaseConv2D(32, 64, kernel_size=3, stride=2, padding=1, act='relu'),  # 72 72
+                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
                           nn.MaxPool2d(kernel_size=3, stride=1, padding=1)),
 
             nn.Sequential(BaseConv2D(64, 128, kernel_size=3, stride=2, padding=1, act='relu'),  # 转成 36 36
+                          BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
                           nn.MaxPool2d(kernel_size=3, stride=1, padding=1)),
 
             nn.Sequential(BaseConv2D(128, 256, kernel_size=3, stride=2, padding=1, act='relu'),  # 转成 18 18
+                          BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
                           nn.MaxPool2d(kernel_size=3, stride=1, padding=1)),
 
             nn.Sequential(BaseConv2D(256, 512, kernel_size=3, stride=2, padding=1, act='relu'),
+                          BaseConv2D(512, 512, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
                           nn.MaxPool2d(kernel_size=3, stride=1, padding=1)),  # 9 9
 
             nn.Sequential(BaseConv2D(512, 512, kernel_size=3, stride=2, padding=0, act='relu'),
@@ -65,24 +70,23 @@ class FaceCreator(nn.Module):
 
             nn.Sequential(BaseTranspose(768, 384, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(384, 384, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
-                          BaseConv2D(384, 384, kernel_size=3, stride=1, padding=1, residual=True, act='relu')),  # 18 18
+                          nn.MaxPool2d(kernel_size=3, stride=1, padding=1), ),  # 18 18
 
             nn.Sequential(BaseTranspose(640, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
-                          BaseConv2D(256, 256, kernel_size=3, stride=1, padding=1, residual=True, act='relu')),  # 36 36
+                          nn.MaxPool2d(kernel_size=3, stride=1, padding=1), ),  # 36 36
 
             nn.Sequential(BaseTranspose(384, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
-                          BaseConv2D(128, 128, kernel_size=3, stride=1, padding=1, residual=True, act='relu')),  # 72 72
+                          nn.MaxPool2d(kernel_size=3, stride=1, padding=1), ),  # 72 72
 
             nn.Sequential(BaseTranspose(192, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
-                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
-                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True, act='relu')),  # 144 144
+                          nn.MaxPool2d(kernel_size=3, stride=1, padding=1), ),  # 144 144
 
             nn.Sequential(BaseTranspose(96, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
                           BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True, act='relu'),
-                          BaseConv2D(64, 64, kernel_size=3, stride=1, padding=1, residual=True, act='relu')),  # 288 288
+                          nn.MaxPool2d(kernel_size=3, stride=1, padding=1), ),  # 288 288
 
         ])
 

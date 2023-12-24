@@ -1,3 +1,4 @@
+import numpy as np
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 import logging
@@ -21,3 +22,21 @@ class FaceDetector():
     def faceDetec(self, *args):
         raw_result = self.mog_face_detection_func(args[0])
         return raw_result
+
+    def faceBatchDetection(self, frames):
+        frames = frames.copy()
+        faces = []
+        for frame in frames:
+            face_result = self.mog_face_detection_func(frame)
+            scores = face_result['scores']
+            boxes = face_result['boxes']
+            if scores is None or len(scores) == 0:
+                print('No face detected')
+                return None
+            else:
+                idx = scores.index(max(scores))
+                box = boxes[idx]
+                x1, y1, x2, y2 = box
+                faces.append([int(y1),int(y2),int(x1),int(x2)])
+        return faces
+
