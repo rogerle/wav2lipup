@@ -293,10 +293,10 @@ def main():
 
     model = FaceCreator()
     cuda_ids = os.environ.get('CUDA_VISIBLE_DEVICES')
-    model = nn.DataParallel(model,device_ids=cuda_ids)
+    model = nn.DataParallel(model,device_ids=[0,1,2,3])
     model.to(device)
     disc = Discriminator()
-    disc = nn.DataParallel(disc,device_ids=cuda_ids)
+    disc = nn.DataParallel(disc,device_ids=[0,1,2,3])
     disc.to(device)
 
     print('total trainable params {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
