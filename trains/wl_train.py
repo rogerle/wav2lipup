@@ -16,6 +16,13 @@ from models.SyncNetModel import SyncNetModel
 from process_util.ParamsUtil import ParamsUtil
 from wldatasets.FaceDataset import FaceDataset
 
+
+class MyDataParallel(nn.DataParallel):
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.module, name)
 # 判断是否使用gpu
 import os
 
@@ -293,10 +300,10 @@ def main():
 
     model = FaceCreator()
     cuda_ids = os.environ.get('CUDA_VISIBLE_DEVICES')
-    model = nn.DataParallel(model,device_ids=[0,1,2,3])
+    model = MyDataParallel(model,device_ids=[0,1,2,3])
     model.to(device)
     disc = Discriminator()
-    disc = nn.DataParallel(disc,device_ids=[0,1,2,3])
+    disc = MyDataParallel(disc,device_ids=[0,1,2,3])
     disc.to(device)
 
     print('total trainable params {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
