@@ -299,7 +299,7 @@ def main():
                                   num_workers=param.num_works, drop_last=True)
 
     model = FaceCreator()
-    cuda_ids = os.environ.get('CUDA_VISIBLE_DEVICES')
+    cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES')]
     model = MyDataParallel(model,device_ids=[0,1,2,3])
     model.to(device)
     disc = Discriminator()
