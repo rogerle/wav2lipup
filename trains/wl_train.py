@@ -19,10 +19,8 @@ from wldatasets.FaceDataset import FaceDataset
 # 判断是否使用gpu
 import os
 
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
-
 param = ParamsUtil()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 
 syncnet = SyncNetModel().to(device)
@@ -293,8 +291,13 @@ def main():
     test_data_loader = DataLoader(test_dataset, batch_size=param.batch_size,
                                   num_workers=param.num_works, drop_last=True)
 
-    model = FaceCreator().to(device)
-    disc = Discriminator().to(device)
+    model = FaceCreator()
+    cuda_ids = os.environ.get('CUDA_VISIBLE_DEVICES')
+    model = nn.DataParallel(model,device_ids=cuda_ids)
+    model.to(device)
+    disc = Discriminator()
+    disc = nn.DataParallel(disc,device_ids=cuda_ids)
+    disc.to(device)
 
     print('total trainable params {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print('total DISC trainable params {}'.format(sum(p.numel() for p in disc.parameters() if p.requires_grad)))
