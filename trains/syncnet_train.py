@@ -87,7 +87,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
     numepochs = param.epochs
     checkpoint_interval = param.syncnet_checkpoint_interval
     eval_interval = param.syncnet_eval_interval
-    #scheduler = MultiStepLR(optimizer,milestones=[int(param.syncnet_iepoch),int(param.syncnet_mepoch)],gamma=0.1)
+    scheduler = MultiStepLR(optimizer,milestones=[int(param.syncnet_min),int(param.syncnet_med),int(param.syncnet_max)],gamma=0.1)
 
     with LogWriter(logdir="../logs/syncnet_train/train") as writer:
         while epoch < numepochs:
@@ -124,8 +124,8 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, numepochs))
                 prog_bar.set_postfix(train_loss=running_loss / (step + 1), step=step + 1, gloab_step=global_step,lr=lr)
                 writer.add_scalar(tag='train/step_loss', step=global_step, value=running_loss / (step + 1))
-            #自动调整lr，在40和100个epoch时自动调整
-            #scheduler.step()
+            #自动调整lr
+            scheduler.step()
             epoch += 1
 
 

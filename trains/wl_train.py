@@ -159,19 +159,21 @@ def eval_model(test_data_loader, model, disc):
         return eval_loss
 
 
-def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer, checkpoint_dir,
+def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_optimizer,checkpoint_dir,
           start_step, start_epoch):
     global_step = start_step
     epoch = start_epoch
     num_epochs = param.epochs
     checkpoint_interval = param.checkpoint_interval
     eval_interval = param.eval_interval
-
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,milestones=[param.m_min,param.m_med,param.m_max],gamma=0.1)
+    lr = optimizer.state_dict()['param_groups'][0]['lr']
     with LogWriter(logdir="../logs/wav2lip/train") as writer:
         while epoch < num_epochs:
             running_sync_loss, running_l1_loss, disc_loss, running_perceptual_loss = 0., 0., 0., 0.
             running_disc_real_loss, running_disc_fake_loss = 0., 0.
             prog_bar = tqdm(enumerate(train_data_loader), total=len(train_data_loader), leave=False)
+
             for step, (x, indiv_mels, mel, gt) in prog_bar:
                 disc.train()
                 model.train()
@@ -204,6 +206,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
 
                 loss.backward()
                 optimizer.step()
+
 
                 # Remove all gradients before Training disc
                 disc_optimizer.zero_grad()
@@ -251,9 +254,10 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                         writer.add_scalar(tag='train/eval_loss', step=global_step, value=average_sync_loss)
                         if average_sync_loss < .75:
                             param.set_param('syncnet_wt', 0.01)
-
                 prog_bar.set_description('Syncnet Train Epoch [{0}/{1}]'.format(epoch, num_epochs))
-                prog_bar.set_postfix(Step=global_step, L1=running_l1_loss / (step + 1),
+                prog_bar.set_postfix(Step=global_step,
+                                     L1=running_l1_loss / (step + 1),
+                                     lr=lr,
                                      Sync=running_sync_loss / (step + 1),
                                      Percep=running_perceptual_loss / (step + 1),
                                      Fake=running_disc_fake_loss / (step + 1),
@@ -263,7 +267,8 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 writer.add_scalar(tag='train/Percep_loss', step=global_step, value=running_perceptual_loss / (step + 1))
                 writer.add_scalar(tag='train/Real_loss', step=global_step, value=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/Fake_loss', step=global_step, value=running_disc_fake_loss / (step + 1))
-
+            scheduler.step()
+            lr = optimizer.state_dict()['param_groups'][0]['lr']
             epoch += 1
 
 
