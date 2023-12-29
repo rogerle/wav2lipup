@@ -8,6 +8,7 @@ class FaceDetector():
     logging.basicConfig(level=logging.ERROR)
     # 使用modelscope的mogofacedetector模型进行人脸检测
     model_id = 'damo/cv_resnet50_face-detection_retinaface'
+    #model_id = 'damo/cv_manual_face-detection_tinymog'
 
     # 初始化人脸热别模型，利用这个模型来识别人脸
     def __init__(self):

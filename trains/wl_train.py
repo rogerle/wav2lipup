@@ -171,7 +171,7 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
     num_epochs = param.epochs
     checkpoint_interval = param.checkpoint_interval
     eval_interval = param.eval_interval
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,milestones=[param.m_min,param.m_med,param.m_max],gamma=0.1)
+    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,milestones=[param.m_min,param.m_med,param.m_max],gamma=0.1)
     lr = optimizer.state_dict()['param_groups'][0]['lr']
     with LogWriter(logdir="../logs/wav2lip/train") as writer:
         while epoch < num_epochs:
@@ -272,8 +272,8 @@ def train(model, disc, train_data_loader, test_data_loader, optimizer, disc_opti
                 writer.add_scalar(tag='train/Percep_loss', step=global_step, value=running_perceptual_loss / (step + 1))
                 writer.add_scalar(tag='train/Real_loss', step=global_step, value=running_disc_real_loss / (step + 1))
                 writer.add_scalar(tag='train/Fake_loss', step=global_step, value=running_disc_fake_loss / (step + 1))
-            scheduler.step()
-            lr = optimizer.state_dict()['param_groups'][0]['lr']
+            #scheduler.step()
+            #lr = optimizer.state_dict()['param_groups'][0]['lr']
             epoch += 1
 
 
