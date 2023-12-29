@@ -9,15 +9,16 @@
 
 """
 import argparse
+import logging
 from functools import partial
-from pathlib import Path, PurePath
+from pathlib import Path
+
+from sklearn.model_selection import train_test_split
 from torch import multiprocessing
 from tqdm import tqdm
 
 from process_util.DataProcessor import DataProcessor
 from process_util.PreProcessor import PreProcessor
-from sklearn.model_selection import train_test_split
-import logging
 
 
 def orignal_process(inputdir):
@@ -47,9 +48,9 @@ def orignal_process(inputdir):
 
 def preProcess(inputdir, outputdir, preprocess_type):
     processer = PreProcessor()
-    videos = get_video_fils(inputdir,'mp4')
-    probar = tqdm(enumerate(videos),total=len(videos),leave=False)
-    for i,video in probar:
+    videos = get_video_fils(inputdir, 'mp4')
+    probar = tqdm(enumerate(videos), total=len(videos), leave=False)
+    for i, video in probar:
         if preprocess_type == 'Time':
             processer.videosPreProcessByTime(video,
                                              s_time=5,
@@ -97,14 +98,15 @@ def process_data(inputdir, outputdir):
     files = get_processed_files(inputdir, outputdir)
     proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
 
-    num_p = int(multiprocessing.cpu_count()-2)
+    num_p = int(multiprocessing.cpu_count() - 2)
     ctx = multiprocessing.get_context('spawn')
     pool = ctx.Pool(num_p)
-    prog_bar = tqdm(pool.imap(proc_f,files), total=len(files))
+    prog_bar = tqdm(pool.imap(proc_f, files), total=len(files))
     for result in prog_bar:
         results.append(result)
     pool.close()
     return results
+
 
 def get_processed_data(processed_data_root):
     done_dir = []
@@ -128,7 +130,7 @@ def train_file_write(inputdir):
     if len(result_list) < 14:
         test_result = eval_result = train_result = result_list
     else:
-        train_result, test_result = train_test_split(result_list, test_size=0.15, random_state=42,shuffle=True)
+        train_result, test_result = train_test_split(result_list, test_size=0.15, random_state=42, shuffle=True)
         test_result, eval_result = train_test_split(test_result, test_size=0.5, random_state=42)
 
     for file_name, data_set in zip(("train.txt", "test.txt", "eval.txt"), (train_result, test_result, eval_result)):
@@ -150,16 +152,15 @@ def clear_data(inputdir):
             for img in line.glob('**/*.jpg'):
                 if img.is_file():
                     imgs.append(int(img.stem))
-            if imgs is None or len(imgs) <125 or len(imgs) < max(imgs):
+            if imgs is None or len(imgs) < 125 or len(imgs) < max(imgs):
                 print('delete empty or bad video!{}'.format(line))
                 dirs = line.parts
                 bad_line = str(dirs[-2] + '/' + dirs[-1])
                 bad_list.append(bad_line)
 
-    train_list = clear_badv(train_list,bad_list)
-    test_list = clear_badv(test_list,bad_list)
-    eval_list = clear_badv(eval_list,bad_list)
-
+    train_list = clear_badv(train_list, bad_list)
+    test_list = clear_badv(test_list, bad_list)
+    eval_list = clear_badv(eval_list, bad_list)
 
     with open(inputdir + '/bad_v.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(bad_list))
@@ -169,6 +170,7 @@ def clear_data(inputdir):
         fw.write("\n".join(test_list))
     with open(inputdir + '/eval.txt', 'w', encoding='utf-8') as fw:
         fw.write("\n".join(eval_list))
+
 
 def sync_data(inputdir):
     train_txt = inputdir + '/train.txt'
@@ -209,6 +211,7 @@ def clear_badv(all_list, exclude_list):
 
     return all_list
 
+
 def get_video_fils(input_dir, type):
     inputPath = input_dir
     fileType = type
@@ -218,6 +221,7 @@ def get_video_fils(input_dir, type):
             files.append(file)
     files.sort()
     return files
+
 
 def main():
     logging.basicConfig(level=logging.ERROR)

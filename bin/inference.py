@@ -1,5 +1,4 @@
 import argparse
-import os
 import subprocess
 from pathlib import Path
 
@@ -7,14 +6,14 @@ import cv2
 import numpy as np
 import torch
 from basicsr import imwrite
+from basicsr.archs.rrdbnet_arch import RRDBNet
+from gfpgan.utils import GFPGANer
+from realesrgan import RealESRGANer
 from tqdm import tqdm
 
 from inference_util.InferenceUtil import InferenceUtil
 from models.FaceCreator import FaceCreator
 from process_util.ParamsUtil import ParamsUtil
-from gfpgan.utils import GFPGANer
-from basicsr.archs.rrdbnet_arch import RRDBNet
-from realesrgan import RealESRGANer
 
 hp = ParamsUtil()
 mel_step_size = 16
@@ -117,6 +116,7 @@ def set_realesrgan(args):
                       category=RuntimeWarning)
     return up_sampler
 
+
 def main():
     args = parse_args()
     face_src = args.face
@@ -195,7 +195,7 @@ def main():
         for p, f, c in zip(pred, frames, coords):
             j += 1
             y1, y2, x1, x2 = c
-            cf, rf, sp = gfpgan.enhance(p,paste_back=True, weight=0.5)
+            cf, rf, sp = gfpgan.enhance(p, paste_back=True, weight=0.5)
             hd_p = cv2.resize(sp.astype(np.uint8), (x2 - x1, y2 - y1))
             f[y1:y2, x1:x2] = hd_p
 
@@ -203,7 +203,7 @@ def main():
             out.write(f)
     out.release()
 
-    #process_hd_video(args.img_path + '/result.avi', args)
+    # process_hd_video(args.img_path + '/result.avi', args)
     # command = 'ffmpeg -f image2 -i {}/{}.jpg -tag:v DIVX {}'.format(output_path, '%d', args.img_path + '/result.avi')
     # output = subprocess.call(command, shell=True, stdout=None)
     command = 'ffmpeg -loglevel error -y -i {} -i {} -strict -2 -q:v 1 {}'.format(args.audio,

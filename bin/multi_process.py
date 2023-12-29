@@ -1,14 +1,11 @@
 import argparse
-import shutil
-from pathlib import Path, PurePath
 import multiprocessing
-from multiprocessing import Pool
+from functools import partial
+from pathlib import Path
 
 from tqdm import tqdm
-from functools import partial
+
 from process_util.DataProcessor import DataProcessor
-from process_util.PreProcessor import PreProcessor
-from sklearn.model_selection import train_test_split
 
 dataProcessor = DataProcessor()
 
@@ -40,6 +37,7 @@ def get_processed_files(inputdir, outputdir):
             done_bar.set_description('produce break point!{}'.format(item))
     return files
 
+
 def get_processed_data(processed_data_root):
     done_dir = []
     for done in Path.glob(Path(processed_data_root), '*/*'):
@@ -47,14 +45,15 @@ def get_processed_data(processed_data_root):
             done_dir.append(done)
     return done_dir
 
+
 def process_data(inputdir, outputdir):
     files = get_processed_files(inputdir, outputdir)
 
-    proc_f = partial(dataProcessor.processVideoFile,processed_data_root=outputdir)
+    proc_f = partial(dataProcessor.processVideoFile, processed_data_root=outputdir)
 
     num_p = 4
     pool = multiprocessing.Pool(num_p)
-    pool.map(proc_f,files)
+    pool.map(proc_f, files)
     pool.close()
 
 
@@ -67,6 +66,7 @@ def parse_args():
 
     return args
 
+
 def main():
     args = parse_args()
     data_root = args.data_root
@@ -75,6 +75,7 @@ def main():
     process_dir = data_root + '/processed_data'
 
     process_data(preProcess_dir, process_dir)
+
 
 if __name__ == '__main__':
     main()

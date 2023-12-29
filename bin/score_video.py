@@ -27,24 +27,24 @@ def main():
     dir_list = get_dirList(train_txt)
     test_list = get_dirList(test_txt)
     eval_list = get_dirList(eval_txt)
-    dir_list +=eval_list
-    dir_list +=test_list
+    dir_list += eval_list
+    dir_list += test_list
     Path(data_root + '/score.txt').write_text('')
     Path(data_root + '/bad_off.txt').write_text('')
     score_tools = SyncnetScore()
-    proc_f = partial(score_tools.score_video, checkpoint=checkpoint, data_root=data_root,batch_size=batch_size)
+    proc_f = partial(score_tools.score_video, checkpoint=checkpoint, data_root=data_root, batch_size=batch_size)
     multiprocessing.set_start_method('spawn', force=True)
-    pool=multiprocessing.Pool(processes=num_worker)
-    #ctx = multiprocessing.get_context('spawn')
-   # pool = ctx.Pool(num_worker)
+    pool = multiprocessing.Pool(processes=num_worker)
+    # ctx = multiprocessing.get_context('spawn')
+    # pool = ctx.Pool(num_worker)
     prog_bar = tqdm(pool.imap(proc_f, dir_list), total=len(dir_list))
     results = []
     bad_offset_f = []
     for v_file, offset, conf in prog_bar:
-        results.append('video:{} offset:{} conf:{}'.format(v_file,offset,conf))
+        results.append('video:{} offset:{} conf:{}'.format(v_file, offset, conf))
         with open(data_root + '/score.txt', 'a') as fw:
-            fw.write("{},{},{}\n".format(v_file,offset,conf))
-        if offset<-1 or offset>1:
+            fw.write("{},{},{}\n".format(v_file, offset, conf))
+        if offset < -1 or offset > 1:
             bad_offset_f.append(v_file)
             with open(data_root + '/bad_off.txt', 'a', encoding='utf-8') as fw:
                 fw.write("{}\n".format(v_file))
@@ -52,9 +52,6 @@ def main():
     torch.cuda.empty_cache()
     pool.close()
     pool.join()
-
-
-
 
 
 def get_dirList(path):
