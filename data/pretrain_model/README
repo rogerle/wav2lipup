@@ -1,1 +1,5 @@
 用于一些预训练模型存放
+主要的模型有
+realesrgan的预训练模型
+GFPGAN v1.3的预训练模型
+segmentation的BiSeNet预训练模型

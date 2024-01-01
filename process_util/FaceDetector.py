@@ -33,11 +33,12 @@ class FaceDetector():
             boxes = face_result['boxes']
             if scores is None or len(scores) == 0:
                 print('No face detected')
-                return None
+                faces.append([-1,-1,-1,-1])
             else:
                 idx = scores.index(max(scores))
                 box = boxes[idx]
                 x1, y1, x2, y2 = box
-                faces.append([int(y1),int(y2),int(x1),int(x2)])
+                coords= [int(x1),int(y1),int(x2),int(y2)]
+                faces.append(coords)
         return faces
 

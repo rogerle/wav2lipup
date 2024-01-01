@@ -20,11 +20,18 @@ hp = ParamsUtil()
 
 class InferenceUtil():
     def __init__(self, fps, model_path):
-        self.face_detector = FaceDetector()
         self.tmp_dir = os.environ.get('TEMP')
         self.fps = fps
         self.model_path = model_path
 
+    def get_smoothened_boxes(self,boxes, T):
+        for i in range(len(boxes)):
+            if i + T > len(boxes):
+                window = boxes[len(boxes) - T:]
+            else:
+                window = boxes[i: i + T]
+            boxes[i] = np.mean(window, axis=0)
+        return boxes
     def src_video_process(self, video_f):
         v_f = Path(video_f)
         v_name = v_f.stem
@@ -47,24 +54,60 @@ class InferenceUtil():
         print('process the video file {} cost {:.2f}s'.format(video_f, st - s))
         return extract_dir
 
-    def faces_detect(self, f_frames, batch_size):
+    def faces_detect(self, f_frames, args):
         results = []
+        head_exist = []
+
+        face_detector = FaceDetector()
+        batch_size = args.face_det_batch_size
         print('start detecting faces...')
         s = time.time()
-        for i in tqdm(range(0, len(f_frames), batch_size),leave=False):
-            frames = f_frames[i:i + batch_size]
-            boxes = self.face_detector.faceBatchDetection(frames)
-            if boxes is None:
-                return None
-            boxes = np.array(boxes)
-            batch_faces = [
-                [frame[max(0, int(y1)):min(int(y2), frame.shape[0]), max(0, int(x1)):min(int(x2), frame.shape[1])],
-                 (y1, y2, x1, x2)]
-                for frame, (y1, y2, x1, x2) in zip(frames, boxes)]
-            results.extend(batch_faces)
-        st = time.time()
-        print('Detect faces cost {:.2f}s:'.format(st - s))
-        return results
+        while 1:
+            predictions = []
+            try:
+                for i in tqdm(range(0, len(f_frames), batch_size),leave=False):
+                    predictions.extend(face_detector.faceBatchDetection(f_frames[i:i+batch_size]))
+            except RuntimeError:
+                if batch_size == 1:
+                    raise RuntimeError('Image too large to run face detection')
+                batch_size //=2
+                print('Recovering from OOM; New batchsize is {}'.format(batch_size))
+                continue
+            break
+        pady1,pady2,padx1,padx2 =args.pads
+
+        #获取第一帧头像的大小
+        f_head_rec = None
+        f_head_img = None
+        for rect,img in zip(predictions,f_frames):
+            if rect is not None:
+                f_head_rec = rect
+                f_head_img = img
+                break
+
+        for rect,img in zip(predictions,f_frames):
+            if rect is None:
+                head_exist.append(False)
+                if len(results) == 0:
+                    y1 = max(0,f_head_rec[1]-pady1)
+                    y2 = min(f_head_img.shape[0],f_head_rec[3]+pady2)
+                    x1 = max(0,f_head_rec[0]-padx1)
+                    x2 = min(f_head_img.shape[1],f_head_rec[2]+padx2)
+                    results.append([x1,y1,x2,y2])
+                else:
+                    results.append(results[-1])
+            else:
+                head_exist.append(True)
+                y1 =max(0,rect[1] - pady1)
+                y2 = min(f_head_img.shape[0],rect[3]+pady2)
+                x1 = max(0,rect[0] - padx1)
+                x2 = min(f_head_img.shape[1],rect[2]+padx2)
+                results.append([x1,y1,x2,y2])
+        boxes = np.array(results)
+        if not args.nosmooth: boxes = self.get_smoothened_boxes(boxes, T=5)
+        results = [[f_frames[y1:y2,x1:x2],(y1,y2,x1,x2)] for f_frames,(x1,y1,x2,y2) in zip(f_frames,boxes)]
+        del face_detector
+        return results,head_exist
 
     def get_frames(self, img_path, names):
         imgs = []
@@ -117,17 +160,27 @@ class InferenceUtil():
 
         return orig_mel
 
-    def gen_data(self, frame_names, mels, args):
-        frames = self.get_frames(args.img_path, frame_names)
+    def gen_data(self, frames, mels, args):
         img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
-        faces = self.faces_detect(frames, args.face_det_batch_size)
-        if faces is None:
+
+        #*******识别人脸位置坐标，未识别的对应为none *******************
+        if args.box[0] == -1:
+            if not args.static:
+                face_det_result,head_exist = self.faces_detect(frames,args)
+            else:
+                face_det_result,head_exist = self.faces_detect([frames[0]],args)
+        else:
+                print('Using the specified bounding box instead of face detaction....')
+                y1,y2,x1,x2 = args.box
+                face_det_result = [[(f[y1:y2, x1:x2],(y1,y2,x1,x2))] for f in frames ]
+                head_exit = [True]*len(frames)
+        if face_det_result is None:
             raise ValueError('No faces in video!Face not detected! Ensure the video contains a face in all the frames.')
 
-        for i, m in enumerate(mels):
+        for i, m in tqdm(enumerate(mels),total=len(mels),leave=False):
             idx = 0 if args.static else i % len(frames)
             frame_to_save = frames[idx].copy()
-            face, coords = faces[idx].copy()
+            face, coords = face_det_result[idx].copy()
             face = cv2.resize(face, (hp.img_size, hp.img_size))
 
             img_batch.append(face)
