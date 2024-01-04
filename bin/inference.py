@@ -166,7 +166,7 @@ def main():
     else:
         ex_dir = Path(args.face).parent.as_posix()
         tmp_name = Path(args.face).stem +"_25.mp4"
-        ffmpeg_cmd = "ffmpeg -loglevel error -y -i {0} -qscale:v 2 -async 1 -r {1} {2}/{3}".format(args.face, args.fps, ex_dir,tmp_name)
+        ffmpeg_cmd = "ffmpeg -loglevel error -y -i {0} -vf scale=720:1280 yy-async 1 -r {1} {2}/{3}".format(args.face, args.fps, ex_dir,tmp_name)
         output = subprocess.call(ffmpeg_cmd, shell=True, stdout=None)
         args.face = ex_dir+'/'+tmp_name
         video_stream = cv2.VideoCapture(args.face)
