@@ -35,10 +35,7 @@ def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     else:
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
     s = checkpoint["state_dict"]
-    new_s = {}
-    for k, v in s.items():
-        new_s[k.replace('module.', '')] = v
-    model.load_state_dict(new_s)
+    model.load_state_dict(s)
     if not reset_optimizer:
         optimizer_state = checkpoint["optimizer"]
         if optimizer_state is not None:
@@ -156,6 +153,9 @@ def main():
     model = SyncNetModel()
     cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
     print('cuda ids:{}'.format(cuda_ids))
+    model = MyDataParallel(model, device_ids=cuda_ids)
+    model.to(device)
+
 
     print("SyncNet Model's Total trainable params {}".format(
         sum(p.numel() for p in model.parameters() if p.requires_grad)))
@@ -168,8 +168,7 @@ def main():
 
     if checkpoint_path is not None:
         model, start_step, start_epoch,optimizer = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
-    model = MyDataParallel(model, device_ids=cuda_ids)
-    model.to(device)
+
 
     train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir, start_step, start_epoch)
 
