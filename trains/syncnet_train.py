@@ -154,7 +154,9 @@ def main():
                                 num_workers=param.num_works)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = SyncNetModel()
-
+    cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
+    print('cuda ids:{}'.format(cuda_ids))
+    model = MyDataParallel(model, device_ids=cuda_ids)
     print("SyncNet Model's Total trainable params {}".format(
         sum(p.numel() for p in model.parameters() if p.requires_grad)))
 
@@ -167,9 +169,8 @@ def main():
     if checkpoint_path is not None:
         model, start_step, start_epoch,optimizer = load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False)
 
-    cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
-    print('cuda ids:{}'.format(cuda_ids))
-    model = MyDataParallel(model, device_ids=cuda_ids)
+
+
     model.to(device)
 
     train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint_dir, start_step, start_epoch)
