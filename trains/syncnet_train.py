@@ -154,11 +154,11 @@ def main():
     val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size,
                                 num_workers=param.num_works)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = SyncNetModel().to(device)
-
+    model = SyncNetModel()
     cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
     print('cuda ids:{}'.format(cuda_ids))
     model = MyDataParallel(model, device_ids=cuda_ids)
+    model.to(device)
 
 
 
