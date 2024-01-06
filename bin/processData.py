@@ -152,7 +152,7 @@ def clear_data(inputdir):
             for img in line.glob('**/*.jpg'):
                 if img.is_file():
                     imgs.append(int(img.stem))
-            if imgs is None or len(imgs) < 125 or len(imgs) < max(imgs):
+            if imgs is None or len(imgs) < 25 or len(imgs) < max(imgs):
                 print('delete empty or bad video!{}'.format(line))
                 dirs = line.parts
                 bad_line = str(dirs[-2] + '/' + dirs[-1])
