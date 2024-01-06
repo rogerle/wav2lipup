@@ -157,6 +157,7 @@ def main():
     model = SyncNetModel().to(device)
 
     cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
+    print('cuda ids:{}'.format(cuda_ids))
     model = MyDataParallel(model, device_ids=cuda_ids)
 
 
