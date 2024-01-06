@@ -35,7 +35,7 @@ def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     else:
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
     s = checkpoint["state_dict"]
-    model.load_state_dict(s)
+    model.load_state_dict(s,strict=False)
     if not reset_optimizer:
         optimizer_state = checkpoint["optimizer"]
         if optimizer_state is not None:
