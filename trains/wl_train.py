@@ -299,12 +299,7 @@ def main():
                                   num_workers=param.num_works, drop_last=True)
 
     model = FaceCreator()
-    cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
-    model = MyDataParallel(model,device_ids=cuda_ids)
-    model.to(device)
     disc = Discriminator()
-    disc = MyDataParallel(disc,device_ids=cuda_ids)
-    disc.to(device)
 
     print('total trainable params {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print('total DISC trainable params {}'.format(sum(p.numel() for p in disc.parameters() if p.requires_grad)))
@@ -322,6 +317,13 @@ def main():
     if disc_checkpoint_path is not None:
         disc, start_step, start_epoch = load_checkpoint(disc_checkpoint_path, disc, disc_optimizer,
                                                         reset_optimizer=False)
+    cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
+    model = MyDataParallel(model,device_ids=cuda_ids)
+    model.to(device)
+
+    disc = MyDataParallel(disc,device_ids=cuda_ids)
+    disc.to(device)
+
 
     # 装在sync_net
     load_checkpoint(syncnet_checkpoint_path, syncnet, None, reset_optimizer=True)
