@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from torch.optim.lr_scheduler import MultiStepLR
@@ -20,7 +21,13 @@ param = ParamsUtil()
 logloss = nn.BCELoss()
 #logloss = nn.BCEWithLogitsLoss()
 
-
+class MyDataParallel(nn.DataParallel):
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.module, name)
+# 判断是否使用gpu
 def load_checkpoint(checkpoint_path, model, optimizer, reset_optimizer=False):
     print("load checkpoint from: {}".format(checkpoint_path))
     if torch.cuda.is_available():
@@ -125,7 +132,7 @@ def train(device, model, train_dataloader, val_dataloader, optimizer, checkpoint
                 prog_bar.set_postfix(train_loss=running_loss / (step + 1), step=step + 1, gloab_step=global_step,lr=lr)
                 writer.add_scalar(tag='sync_train/step_loss', step=global_step, value=running_loss / (step + 1))
             #自动调整lr
-            #scheduler.step()
+            # scheduler.step()
             epoch += 1
 
 
@@ -146,10 +153,13 @@ def main():
                                   num_workers=param.num_works)
     val_dataloader = DataLoader(val_dataset, batch_size=param.syncnet_batch_size,
                                 num_workers=param.num_works)
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
     model = SyncNetModel().to(device)
+
+    cuda_ids = [int(d_id) for d_id in os.environ.get('CUDA_VISIBLE_DEVICES').split(',')]
+    model = MyDataParallel(model, device_ids=cuda_ids)
+
+
 
     print("SyncNet Model's Total trainable params {}".format(
         sum(p.numel() for p in model.parameters() if p.requires_grad)))
